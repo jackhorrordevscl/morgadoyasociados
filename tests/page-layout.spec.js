@@ -73,8 +73,18 @@ for (const page of pages) {
 }
 
 const contact = fs.readFileSync(path.join(webRoot, 'contact.html'), 'utf8');
+assert.match(
+  contact,
+  /<form id="contact-form" action="send-mail\.php" method="post" class="space-y-5" aria-labelledby="contact-form-title" aria-describedby="contact-form-help" aria-busy="false">/,
+  'The contact form provides a native POST fallback when JavaScript is unavailable',
+);
+assert.doesNotMatch(contact, /<form id="contact-form"[^>]*\bnovalidate\b/, 'The native fallback retains browser validation');
 for (const value of ['id="contact-form"', 'id="f-name"', 'id="f-email"', 'id="f-phone"', 'id="f-area"', 'id="f-msg"', 'id="privacy-consent"', 'name="privacy_consent"', 'value="accepted"', 'required']) {
   assert.ok(contact.includes(value), `Contact form preserves ${value}`);
 }
 assert.match(contact, /legal\.html#privacidad/);
+
+const contactScript = fs.readFileSync(path.join(webRoot, 'assets', 'contact.js'), 'utf8');
+assert.match(contactScript, /event\.preventDefault\(\)/, 'The enhanced form prevents native navigation');
+assert.match(contactScript, /fetch\('send-mail\.php', \{ method: 'POST', body: new FormData\(form\) \}\)/, 'The enhanced form keeps its JSON POST request');
 console.log('Generated page layout contract verified.');

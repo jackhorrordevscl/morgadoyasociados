@@ -31,6 +31,31 @@ function createTestWebRoot(tempRoot, name) {
   return destination;
 }
 
+function writeMailConfig(documentRoot, smtpPort) {
+  fs.writeFileSync(path.join(documentRoot, 'mail-config.php'), `<?php
+return [
+    'smtp_host' => '127.0.0.1',
+    'smtp_port' => ${smtpPort},
+    'smtp_user' => 'test-sender@example.test',
+    'smtp_pass' => 'not-a-secret',
+    'smtp_secure' => 'tls',
+    'to_email' => 'test-recipient@example.test',
+    'to_name' => 'Local test recipient',
+];
+`);
+}
+
+function useFixtureRateLimitDirectory(documentRoot) {
+  const endpoint = path.join(documentRoot, 'send-mail.php');
+  const source = fs.readFileSync(endpoint, 'utf8');
+  const updated = source.replace(
+    "$dir = sys_get_temp_dir() . '/morgado-contact-ratelimit';",
+    "$dir = __DIR__ . '/morgado-contact-ratelimit';",
+  );
+  assert.notEqual(updated, source, 'The fixture must redirect rate-limit storage.');
+  fs.writeFileSync(endpoint, updated);
+}
+
 function reservePort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -76,6 +101,61 @@ async function startPhpServer(documentRoot, extraArgs = []) {
       child.kill();
     }),
   };
+}
+
+async function startSmtpProbe() {
+  let connections = 0;
+  const server = net.createServer((socket) => {
+    connections += 1;
+    socket.destroy();
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const { port } = server.address();
+  return {
+    port,
+    connections: () => connections,
+    stop: () => new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve()))),
+  };
+}
+
+function lockFixtureRateLimitFile(documentRoot) {
+  const scriptPath = path.join(documentRoot, 'lock-rate-limit.php');
+  fs.writeFileSync(scriptPath, `<?php
+$directory = __DIR__ . '/morgado-contact-ratelimit';
+if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) {
+    exit(1);
+}
+$file = $directory . '/' . hash('sha256', '127.0.0.1') . '.json';
+$handle = fopen($file, 'c+');
+if ($handle === false || !flock($handle, LOCK_EX)) {
+    exit(1);
+}
+echo "locked\\n";
+sleep(30);
+`);
+  const child = spawn(phpBinary, [scriptPath], { stdio: ['ignore', 'pipe', 'pipe'] });
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Rate-limit lock helper did not acquire the lock.')), 5000);
+    child.stdout.once('data', (data) => {
+      clearTimeout(timer);
+      if (data.toString() === 'locked\n') {
+        resolve(child);
+      } else {
+        reject(new Error(`Rate-limit lock helper failed: ${data}`));
+      }
+    });
+    child.once('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.once('exit', (code) => {
+      clearTimeout(timer);
+      reject(new Error(`Rate-limit lock helper exited with code ${code}`));
+    });
+  });
 }
 
 function post(baseUrl, fields) {
@@ -188,6 +268,36 @@ async function run() {
       await assertJsonResponse(noExtensionsServer, validFields, 503);
     } finally {
       await noExtensionsServer.stop();
+    }
+
+    const smtpProbe = await startSmtpProbe();
+    try {
+      const storageFailureRoot = createTestWebRoot(tempRoot, 'storage-failure');
+      writeMailConfig(storageFailureRoot, smtpProbe.port);
+      useFixtureRateLimitDirectory(storageFailureRoot);
+      fs.writeFileSync(path.join(storageFailureRoot, 'morgado-contact-ratelimit'), 'blocked');
+      const storageFailureServer = await startPhpServer(storageFailureRoot);
+      try {
+        await assertJsonResponse(storageFailureServer, validFields, 503);
+        assert.equal(smtpProbe.connections(), 0, 'Unavailable rate-limit storage must prevent SMTP delivery.');
+      } finally {
+        await storageFailureServer.stop();
+      }
+
+      const lockFailureRoot = createTestWebRoot(tempRoot, 'lock-failure');
+      writeMailConfig(lockFailureRoot, smtpProbe.port);
+      useFixtureRateLimitDirectory(lockFailureRoot);
+      const lockHelper = await lockFixtureRateLimitFile(lockFailureRoot);
+      const lockFailureServer = await startPhpServer(lockFailureRoot);
+      try {
+        await assertJsonResponse(lockFailureServer, validFields, 503);
+        assert.equal(smtpProbe.connections(), 0, 'Unavailable rate-limit locking must prevent SMTP delivery.');
+      } finally {
+        await lockFailureServer.stop();
+        lockHelper.kill();
+      }
+    } finally {
+      await smtpProbe.stop();
     }
 
     const smtpFailureRoot = path.join(tempRoot, 'smtp-failure');

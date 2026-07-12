@@ -61,22 +61,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
  * en un archivo del directorio temporal del sistema (fuera del webroot, no
  * accesible por HTTP), protegido con flock() para uso concurrente seguro.
  */
-function checkRateLimit(string $ip, int $maxRequests, int $windowSeconds, int $minSecondsBetween): bool
+function checkRateLimit(string $ip, int $maxRequests, int $windowSeconds, int $minSecondsBetween): ?bool
 {
     $dir = sys_get_temp_dir() . '/morgado-contact-ratelimit';
     if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
-        return true; // si no se puede llevar el conteo, no bloqueamos el envío
+        return null;
     }
 
     $file = $dir . '/' . hash('sha256', $ip) . '.json';
     $handle = fopen($file, 'c+');
     if ($handle === false) {
-        return true;
+        return null;
     }
 
-    if (!flock($handle, LOCK_EX)) {
+    if (!flock($handle, LOCK_EX | LOCK_NB)) {
         fclose($handle);
-        return true;
+        return null;
     }
 
     $raw = stream_get_contents($handle);
@@ -98,10 +98,19 @@ function checkRateLimit(string $ip, int $maxRequests, int $windowSeconds, int $m
 
     if ($allowed) {
         $timestamps[] = $now;
-        ftruncate($handle, 0);
-        rewind($handle);
-        fwrite($handle, json_encode(['timestamps' => $timestamps]));
-        fflush($handle);
+        $encoded = json_encode(['timestamps' => $timestamps]);
+        if ($encoded === false || !ftruncate($handle, 0) || !rewind($handle)) {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+            return null;
+        }
+
+        $written = fwrite($handle, $encoded);
+        if ($written === false || $written !== strlen($encoded) || !fflush($handle)) {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+            return null;
+        }
     }
 
     flock($handle, LOCK_UN);
@@ -111,7 +120,13 @@ function checkRateLimit(string $ip, int $maxRequests, int $windowSeconds, int $m
 }
 
 $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-if (!checkRateLimit($clientIp, maxRequests: 5, windowSeconds: 900, minSecondsBetween: 15)) {
+$rateLimitResult = checkRateLimit($clientIp, maxRequests: 5, windowSeconds: 900, minSecondsBetween: 15);
+if ($rateLimitResult === null) {
+    logMailEvent('rate_limit_storage_unavailable');
+    respond(503, false, 'El servicio de contacto no está disponible. Intente nuevamente más tarde.');
+}
+
+if (!$rateLimitResult) {
     respond(429, false, 'Ha enviado demasiadas solicitudes. Por favor intente nuevamente en unos minutos.');
 }
 

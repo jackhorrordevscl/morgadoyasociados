@@ -186,7 +186,7 @@
       <div class="reveal-content max-w-lg">
         <h2 id="contact-form-title" class="font-serif text-3xl mb-2" style="color:var(--charcoal)">Envíe su consulta</h2>
         <p id="contact-form-help" class="text-sm mb-8" style="color:var(--gray-text)">Complete el formulario y nos pondremos en contacto dentro de 24 horas hábiles.</p>
-        <form id="contact-form" class="space-y-5" novalidate aria-labelledby="contact-form-title" aria-describedby="contact-form-help" aria-busy="false">
+        <form id="contact-form" action="send-mail.php" method="post" class="space-y-5" aria-labelledby="contact-form-title" aria-describedby="contact-form-help" aria-busy="false">
           <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
           <div>
             <label for="f-name" class="block text-sm font-medium mb-1.5" style="color:var(--charcoal)">Nombre completo</label>
