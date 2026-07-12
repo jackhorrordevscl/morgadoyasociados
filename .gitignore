@@ -1,0 +1,11 @@
+node_modules/
+web/mail-config.php
+
+# Repository-local CodeGraph index and daemon state.
+.codegraph/
+
+# Generated test runner output.
+test-results/
+
+# Windows shell artifact created at the repository root.
+/NUL

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+Disallow: /send-mail.php
+Disallow: /health.php
+Disallow: /mail-config.php
+Disallow: /mail-config.example.php
+Disallow: /lib/
+Disallow: /scripts/
+Disallow: /tests/
+
+Sitemap: https://morgadoyasociados.cl/sitemap.xml

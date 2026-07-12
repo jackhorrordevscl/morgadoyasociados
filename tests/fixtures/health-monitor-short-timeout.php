@@ -1,0 +1,3 @@
+<?php
+
+define('HEALTH_MONITOR_TEST_TIMEOUT_SECONDS', 1);

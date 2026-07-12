@@ -1,0 +1,25 @@
+{
+  "name": "morgado-cia-asociados-web",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Sitio estático de Asesoría Legal Morgado, Cía. & Asociados",
+  "scripts": {
+    "build:pages": "node scripts/build-pages.js",
+    "build": "npm run build:css",
+    "build:css": "npm run build:pages && tailwindcss -i ./web/assets/tailwind.src.css -o ./web/assets/tailwind.css --minify",
+    "watch:css": "npm run build:pages && tailwindcss -i ./web/assets/tailwind.src.css -o ./web/assets/tailwind.css --watch",
+    "test:links": "node tests/service-links.spec.js",
+    "test:mail": "node tests/send-mail.spec.js",
+    "test:health": "node tests/health.spec.js",
+    "test:health-monitor": "node tests/health-monitor.spec.js",
+    "test:seo": "node tests/seo.spec.js",
+    "test:security": "node tests/security-headers.spec.js",
+    "test:pages": "node tests/page-layout.spec.js",
+    "test": "npm run build:css && npm run test:pages && npm run test:links && npm run test:mail && npm run test:health && npm run test:health-monitor && npm run test:seo && npm run test:security"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.2",
+    "playwright": "^1.61.1",
+    "tailwindcss": "^4.3.2"
+  }
+}
