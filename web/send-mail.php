@@ -80,8 +80,27 @@ function checkRateLimit(string $ip, int $maxRequests, int $windowSeconds, int $m
     }
 
     $raw = stream_get_contents($handle);
-    $data = $raw !== false && $raw !== '' ? json_decode($raw, true) : null;
-    $timestamps = is_array($data['timestamps'] ?? null) ? $data['timestamps'] : [];
+    if ($raw === false) {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+        return null;
+    }
+
+    $timestamps = [];
+    if ($raw !== '') {
+        $data = json_decode($raw, true);
+        if (
+            !is_array($data)
+            || !array_key_exists('timestamps', $data)
+            || !is_array($data['timestamps'])
+        ) {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+            return null;
+        }
+
+        $timestamps = $data['timestamps'];
+    }
 
     $now = time();
     $timestamps = array_values(array_filter(

@@ -56,6 +56,15 @@ function useFixtureRateLimitDirectory(documentRoot) {
   fs.writeFileSync(endpoint, updated);
 }
 
+function writeFixtureRateLimitState(documentRoot, state) {
+  const directory = path.join(documentRoot, 'morgado-contact-ratelimit');
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(
+    path.join(directory, `${crypto.createHash('sha256').update('127.0.0.1').digest('hex')}.json`),
+    state,
+  );
+}
+
 function reservePort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -295,6 +304,30 @@ async function run() {
       } finally {
         await lockFailureServer.stop();
         lockHelper.kill();
+      }
+
+      const malformedStateRoot = createTestWebRoot(tempRoot, 'malformed-rate-limit-state');
+      writeMailConfig(malformedStateRoot, smtpProbe.port);
+      useFixtureRateLimitDirectory(malformedStateRoot);
+      writeFixtureRateLimitState(malformedStateRoot, '{invalid json');
+      const malformedStateServer = await startPhpServer(malformedStateRoot);
+      try {
+        await assertJsonResponse(malformedStateServer, validFields, 503);
+        assert.equal(smtpProbe.connections(), 0, 'Malformed rate-limit state must prevent SMTP delivery.');
+      } finally {
+        await malformedStateServer.stop();
+      }
+
+      const invalidStateRoot = createTestWebRoot(tempRoot, 'invalid-rate-limit-state');
+      writeMailConfig(invalidStateRoot, smtpProbe.port);
+      useFixtureRateLimitDirectory(invalidStateRoot);
+      writeFixtureRateLimitState(invalidStateRoot, '{"timestamps":"invalid"}');
+      const invalidStateServer = await startPhpServer(invalidStateRoot);
+      try {
+        await assertJsonResponse(invalidStateServer, validFields, 503);
+        assert.equal(smtpProbe.connections(), 0, 'Invalid rate-limit state must prevent SMTP delivery.');
+      } finally {
+        await invalidStateServer.stop();
       }
     } finally {
       await smtpProbe.stop();
