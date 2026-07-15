@@ -16,6 +16,7 @@ Static MVP site for Asesoría Legal Morgado, Cía. & Asociados.
 - `npm run watch:css` rebuilds pages and watches Tailwind during local styling work.
 - `node scripts/build-pages.js --extract-existing` bootstraps missing `src/pages/*.json` files from the current `web/*.html` output.
 - `npm test` runs the build plus the site checks.
+- GitHub Actions runs this gate on every push and pull request, including PHP syntax checks and generated-output drift detection.
 
 ## Source vs generated
 
