@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const webRoot = path.resolve(__dirname, '..', 'web');
-const expectedCsp = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://images.unsplash.com; connect-src 'self'; frame-src https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+const expectedCsp = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com; connect-src 'self'; frame-src https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
 const htaccess = fs.readFileSync(path.join(webRoot, '.htaccess'), 'utf8');
 
 assert.match(htaccess, new RegExp(`Header always set Content-Security-Policy "${expectedCsp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
