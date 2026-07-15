@@ -46,6 +46,15 @@ function writeSources() {
   }
 }
 
+function writeSitemap() {
+  const urls = pages
+    .filter((page) => page.sitemap)
+    .map((page) => `  <url><loc>${page.canonical}</loc></url>`);
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
+  fs.writeFileSync(path.join(webRoot, 'sitemap.xml'), sitemap);
+  console.log('Built sitemap.xml');
+}
+
 if (extract) writeSources();
 
 for (const page of pages) {
@@ -60,3 +69,5 @@ for (const page of pages) {
   fs.writeFileSync(path.join(webRoot, page.filename), pageLayout(page, fragment));
   console.log(`Built ${page.filename}`);
 }
+
+writeSitemap();
