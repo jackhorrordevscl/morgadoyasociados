@@ -103,9 +103,20 @@ const serviceCardMarkup = pageLayout(servicePage, {
   pageContentBetweenShell: '<div class="svc"><div><h3 class="title">Penal</h3></div></div><a href="#areas">Civil</a><div class="svc"><h3>Familia</h3></div>',
   shellCloseAfterFooter: '',
 });
-assert.match(serviceCardMarkup, /<a href="penal\.html" class="svc"><div><h3 class="title">Penal<\/h3><\/div><\/a>/, 'A mapped service card becomes a link without changing its contents');
+assert.match(serviceCardMarkup, /<a href="penal\.html" class="svc block"><div><h3 class="title">Penal<\/h3><\/div><\/a>/, 'A mapped service card remains a block-level link without changing its contents');
 assert.match(serviceCardMarkup, /<a href="civil\.html">Civil<\/a>/, 'Existing service anchors keep their destination rewrite');
 assert.match(serviceCardMarkup, /<div class="svc"><h3>Familia<\/h3><\/div>/, 'Unmapped service cards remain unchanged');
+
+const services = fs.readFileSync(path.join(webRoot, 'services.html'), 'utf8');
+for (const [label, href] of Object.entries(servicePage.serviceLinks)) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedHref = href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.match(
+    services,
+    new RegExp(`<a href="${escapedHref}" class="(?=[^"]*\\bsvc\\b)(?=[^"]*\\bblock\\b)[^"]*"[^>]*>[\\s\\S]*?<h3[^>]*>${escapedLabel}<\\/h3>`),
+    `${label} service card remains a block-level link to ${href}`,
+  );
+}
 
 const contactScript = fs.readFileSync(path.join(webRoot, 'assets', 'contact.js'), 'utf8');
 assert.match(contactScript, /event\.preventDefault\(\)/, 'The enhanced form prevents native navigation');

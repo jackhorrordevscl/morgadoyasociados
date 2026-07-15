@@ -57,7 +57,11 @@ function renderServiceCards(content, serviceLinks) {
     const card = rendered.slice(cardStart, cardEnd);
     const href = serviceLinks[cardLabel(card)];
     if (href) {
-      const linkedCard = `<a href="${href}"${card.slice('<div'.length, -'</div>'.length)}</a>`;
+      const attributes = card.slice('<div'.length, -'</div>'.length).replace(
+        /\bclass="([^"]*)"/,
+        (match, classes) => (/(^|\s)block(\s|$)/.test(classes) ? match : `class="${classes} block"`),
+      );
+      const linkedCard = `<a href="${href}"${attributes}</a>`;
       rendered = `${rendered.slice(0, cardStart)}${linkedCard}${rendered.slice(cardEnd)}`;
       cardStart += linkedCard.length;
     } else {
