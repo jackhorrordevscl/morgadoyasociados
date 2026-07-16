@@ -1,11 +1,12 @@
 const { site, titleFor, canonicalFor } = require('./site');
 
-function definePage({ titleSuffix, robots = site.defaultRobots, ...page }) {
+function definePage({ titleSuffix, robots = site.defaultRobots, sitemap = true, ...page }) {
   return {
     ...page,
     title: titleFor(titleSuffix),
     canonical: canonicalFor(page.filename),
     robots,
+    sitemap,
   };
 }
 
@@ -25,8 +26,8 @@ const pages = [
   definePage({ slug: 'decreto-ley-2695', filename: 'decreto-ley-2695.html', bodyData: 'decree-law-2695', activeNav: 'services', navAriaCurrent: false, titleSuffix: 'Decreto Ley 2.695', description: 'Orientación jurídica en Chile para la regularización de pequeña propiedad raíz conforme al Decreto Ley N° 2.695, con revisión de antecedentes, posesión y procedimiento administrativo.' }),
   definePage({ slug: 'administrativo', filename: 'administrativo.html', bodyData: 'administrative-law', activeNav: 'services', navAriaCurrent: false, titleSuffix: 'Derecho Administrativo', description: 'Asesoría jurídica en derecho administrativo en Chile para procedimientos, recursos, actos administrativos, fiscalizaciones y gestiones ante organismos públicos.' }),
   definePage({ slug: 'aeronautico', filename: 'aeronautico.html', bodyData: 'aeronautical-law', activeNav: 'services', navAriaCurrent: false, titleSuffix: 'Derecho Aeronáutico', description: 'Orientación jurídica en derecho aeronáutico en Chile para operaciones, autorizaciones, contratos, cumplimiento normativo y procedimientos ante la autoridad competente.' }),
-  definePage({ slug: 'legal', filename: 'legal.html', bodyData: 'legal', titleSuffix: 'Legal', description: 'Términos de uso, política de privacidad conforme a la Ley N° 19.628 y política de datos de Asesoría Legal Morgado, Cía. & Asociados.', robots: 'noindex,follow' }),
-  definePage({ slug: 'etica-legal', filename: 'etica-legal.html', bodyData: 'ethics', titleSuffix: 'Ética Profesional', description: 'Principios de ética profesional, confidencialidad, independencia y transparencia de Asesoría Legal Morgado, Cía. & Asociados.', robots: 'noindex,follow', footerCurrent: 'ethics' }),
+  definePage({ slug: 'legal', filename: 'legal.html', bodyData: 'legal', titleSuffix: 'Legal', description: 'Términos de uso, política de privacidad conforme a la Ley N° 19.628 y política de datos de Asesoría Legal Morgado, Cía. & Asociados.', robots: 'noindex,follow', sitemap: false }),
+  definePage({ slug: 'etica-legal', filename: 'etica-legal.html', bodyData: 'ethics', titleSuffix: 'Ética Profesional', description: 'Principios de ética profesional, confidencialidad, independencia y transparencia de Asesoría Legal Morgado, Cía. & Asociados.', robots: 'noindex,follow', sitemap: false, footerCurrent: 'ethics' }),
 ];
 
 module.exports = { pages };
