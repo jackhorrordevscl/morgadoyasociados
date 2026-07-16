@@ -6,7 +6,7 @@ module.exports = function brand(variant = 'short', surface = 'dark') {
   const chipClasses = isLightSurface
     ? 'grid place-items-center h-9 w-9 rounded-full border border-(--rose-dark)/15 bg-white/88 shadow-[0_6px_16px_-10px_rgba(58,50,53,0.35)]'
     : 'grid place-items-center h-9 w-9 rounded-full border border-(--rose-light)/70 bg-white/10';
-  const markClasses = 'h-6 w-6 object-contain';
+  const markClasses = 'brand-mark h-6 w-6 object-contain';
   const textClasses = isLightSurface
     ? 'font-serif text-(--rose-dark) text-[15.5px] leading-tight'
     : 'font-serif text-white text-[15.5px] leading-tight';

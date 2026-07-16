@@ -48,7 +48,9 @@ function cardLabel(card) {
 }
 
 function renderServiceCards(content, serviceLinks) {
-  let rendered = content;
+  let rendered = content
+    .replace('columns-1 md:columns-2 lg:columns-3 gap-6', 'service-grid grid grid-cols-1 md:grid-cols-2 gap-6')
+    .replace(/\bbreak-inside-avoid mb-6\s*/g, '');
   let cardStart = rendered.indexOf('<div class="svc');
 
   while (cardStart >= 0) {
@@ -74,16 +76,74 @@ function renderServiceCards(content, serviceLinks) {
   return rendered;
 }
 
+function normalizeServiceCardIcons(content) {
+  return content.replace(/<svg class="text-3xl"/g, '<svg class="svc-icon text-3xl"');
+}
+
 function renderServiceLinks(content, serviceLinks = {}) {
   return renderServiceCards(rewriteServiceAnchors(content, serviceLinks), serviceLinks);
 }
 
+function addClass(classes, className) {
+  return classes.split(/\s+/).includes(className) ? classes : `${classes} ${className}`;
+}
+
+function normalizeActionIcons(content) {
+  return content.replace(/(<a\b[^>]*\bclass="[^"]*\bbtn-rose\b[^"]*"[^>]*>[\s\S]*?<\/a>)/g, (cta) => cta.replace(/<svg\b([^>]*)>/g, (svg, attributes) => {
+    const stroked = /\bstroke-width="[^"]*"/.test(attributes)
+      ? attributes.replace(/\bstroke-width="[^"]*"/, 'stroke-width="2"')
+      : `${attributes} stroke-width="2"`;
+    return `<svg${stroked} data-icon-role="action">`;
+  }));
+}
+
+function renderServicePage(content, page) {
+  if (page.activeNav !== 'services' || page.navAriaCurrent !== false) return content;
+
+  return content.replace(/\bclass="([^"]*\bbtn-rose\b[^"]*)"/g, (match, classes) => {
+    return `class="${addClass(classes, 'shadow-[0_16px_34px_-16px_rgba(140,75,92,0.9)]')}"`;
+  });
+}
+
+const responsiveImageSettings = {
+  index: {
+    'https://images.unsplash.com/photo-1627518788331-b3b7fdaa382f?auto=format&w=1000&q=80&fit=crop': {
+      sizes: '(min-width: 1440px) 684px, (min-width: 1024px) 47.5vw, 100vw',
+      widths: [480, 768, 1000, 1440],
+    },
+  },
+  about: {
+    'https://images.unsplash.com/photo-1518556336318-c8de4355ccab?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
+    'https://images.unsplash.com/photo-1585240975735-4826abe53080?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
+    'https://images.unsplash.com/photo-1645990543673-53d612fee13e?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
+    'https://images.unsplash.com/photo-1612283061725-f22721e5a3cd?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
+  },
+};
+
+function renderResponsiveImages(content, slug) {
+  const settings = responsiveImageSettings[slug];
+  if (!settings) return content;
+
+  return content.replace(/<img\b[^>]*\bsrc="([^"]+)"[^>]*>/g, (image, src) => {
+    const setting = settings[src];
+    if (!setting) return image;
+
+    const srcset = setting.widths
+      .map((width) => `${src.replace(/([?&])w=\d+/, `$1w=${width}`)} ${width}w`)
+      .join(', ');
+    return image.replace(`src="${src}"`, `src="${src}" srcset="${srcset}" sizes="${setting.sizes}"`);
+  });
+}
+
 module.exports = function pageLayout(page, fragment) {
   const linkedContent = renderServiceLinks(fragment.pageContentBetweenShell, page.serviceLinks);
-  const iconContent = replaceFontAwesomeIcons(linkedContent);
-  const content = iconContent.includes('<main')
-    ? iconContent.replace('<main', '<main id="main-content" tabindex="-1"')
-    : `<main id="main-content" tabindex="-1">\n${iconContent}\n</main>`;
+  const serviceContent = renderServicePage(linkedContent, page);
+  const responsiveContent = renderResponsiveImages(serviceContent, page.slug);
+  const iconContent = normalizeServiceCardIcons(replaceFontAwesomeIcons(responsiveContent));
+  const normalizedContent = normalizeActionIcons(iconContent);
+  const content = normalizedContent.includes('<main')
+    ? normalizedContent.replace('<main', '<main id="main-content" tabindex="-1"')
+    : `<main id="main-content" tabindex="-1">\n${normalizedContent}\n</main>`;
   const renderedContent = page.formFallbackAction
     ? content.replace(
       '<form id="contact-form"',
