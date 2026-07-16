@@ -1,5 +1,58 @@
 const mobileToggle = document.querySelector("[data-mobile-toggle]");
 const mobileMenu = document.querySelector("[data-mobile-menu]");
+const mobileServices = document.querySelector("[data-mobile-services]");
+const servicesMenu = document.querySelector("[data-services-menu]");
+const servicesToggle = document.querySelector("[data-services-toggle]");
+const servicesPanel = document.querySelector("[data-services-panel]");
+
+if (servicesMenu && servicesToggle && servicesPanel) {
+  const serviceLinks = [...servicesPanel.querySelectorAll("a")];
+  const setServicesMenu = (open) => {
+    servicesPanel.hidden = !open;
+    servicesToggle.setAttribute("aria-expanded", String(open));
+    servicesToggle.setAttribute("aria-label", open ? "Cerrar áreas de práctica" : "Abrir áreas de práctica");
+  };
+
+  servicesToggle.addEventListener("click", () => setServicesMenu(servicesPanel.hidden));
+  servicesToggle.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setServicesMenu(true);
+      serviceLinks[0]?.focus();
+    }
+  });
+  servicesPanel.addEventListener("keydown", (event) => {
+    const current = serviceLinks.indexOf(document.activeElement);
+    if (event.key === "Escape") {
+      setServicesMenu(false);
+      servicesToggle.focus();
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      serviceLinks[0]?.focus();
+    } else if (event.key === "End") {
+      event.preventDefault();
+      serviceLinks.at(-1)?.focus();
+    } else if (current >= 0 && ["ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault();
+      serviceLinks[(current + (event.key === "ArrowDown" ? 1 : -1) + serviceLinks.length) % serviceLinks.length]?.focus();
+    }
+  });
+  servicesPanel.addEventListener("click", () => setServicesMenu(false));
+  servicesMenu.addEventListener("focusout", () => {
+    window.setTimeout(() => {
+      if (!servicesMenu.contains(document.activeElement)) setServicesMenu(false);
+    });
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (!servicesMenu.contains(event.target)) setServicesMenu(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !servicesPanel.hidden) {
+      setServicesMenu(false);
+      servicesToggle.focus();
+    }
+  });
+}
 
 if (mobileToggle && mobileMenu) {
   let focusFrame;
@@ -17,6 +70,7 @@ if (mobileToggle && mobileMenu) {
     mobileToggle.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
     mobileToggle.querySelector("svg")?.toggleAttribute("hidden", open);
     mobileToggle.querySelector("[data-mobile-close-icon]")?.toggleAttribute("hidden", !open);
+    if (!open && mobileServices) mobileServices.open = false;
     if (open) {
       focusFrame = window.requestAnimationFrame(() => {
         focusFrame = undefined;
