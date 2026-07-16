@@ -4,6 +4,7 @@ const path = require('node:path');
 const { pages } = require('../src/data/pages');
 const { site, escapeHtmlAttribute } = require('../src/data/site');
 const pageLayout = require('../src/layouts/page');
+const { icon, replaceFontAwesomeIcons } = require('../src/partials/icon');
 
 const webRoot = path.resolve(__dirname, '..', 'web');
 const navLabels = {
@@ -28,6 +29,10 @@ const commonScripts = [
   'assets/nav.js',
   'assets/animations.js',
 ];
+const scaledIcon = replaceFontAwesomeIcons('<i class="fa-solid fa-scale-balanced fa-2x text-(--copper)" aria-hidden="true"></i>');
+assert.match(scaledIcon, /<svg class="text-\(--copper\)" width="2em" height="2em"/, 'Font Awesome scale classes become controlled SVG dimensions');
+assert.doesNotMatch(scaledIcon, /fa-2x/, 'Converted icons exclude obsolete Font Awesome classes');
+assert.match(icon('bars', 'h-4 w-4'), /class="h-4 w-4" width="1em" height="1em"/, 'Helper icons retain their supplied utility classes over the fallback dimensions');
 
 assert.deepEqual(
   fs.readdirSync(webRoot).filter((file) => file.endsWith('.html')).sort(),
@@ -83,6 +88,8 @@ for (const page of pages) {
   assert.equal(html.includes('assets/contact.js'), page.optionalScript === 'assets/contact.js', `${page.filename} contact script contract`);
   assert.equal(html.includes('application/ld+json'), Boolean(page.jsonLd), `${page.filename} JSON-LD contract`);
   assert.equal(html.includes('https://images.unsplash.com" crossorigin'), Boolean(page.preconnectUnsplash), `${page.filename} Unsplash preconnect contract`);
+  assert.match(html, /https:\/\/fonts\.googleapis\.com\/css2\?family=Playfair\+Display:ital,wght@0,400;0,600;1,400;1,600&amp;family=Inter:wght@400;500;600&amp;display=swap/, `${page.filename} only loads used font variants`);
+  assert.doesNotMatch(html, /cdnjs\.cloudflare\.com|font-awesome|fa-(?:solid|regular|brands)/, `${page.filename} excludes Font Awesome assets and classes`);
 }
 
 const contact = fs.readFileSync(path.join(webRoot, 'contact.html'), 'utf8');
@@ -96,6 +103,7 @@ for (const value of ['id="contact-form"', 'id="f-name"', 'id="f-email"', 'id="f-
   assert.ok(contact.includes(value), `Contact form preserves ${value}`);
 }
 assert.match(contact, /legal\.html#privacidad/);
+assert.match(contact, /<svg class="[^"]*"[^>]*aria-hidden="true"[^>]*><(?:circle|path)/, 'Contact icons remain decorative for assistive technology');
 
 const servicePage = pages.find((page) => page.filename === 'services.html');
 const serviceCardMarkup = pageLayout(servicePage, {

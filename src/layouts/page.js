@@ -2,6 +2,7 @@ const head = require('../partials/head');
 const header = require('../partials/header');
 const footer = require('../partials/footer');
 const scripts = require('../partials/scripts');
+const { replaceFontAwesomeIcons } = require('../partials/icon');
 
 function rewriteServiceAnchors(content, serviceLinks) {
   return content.replace(/<a\b([^>]*\bhref=")[^"]*("[^>]*)>([\s\S]*?)<\/a>/g, (match, beforeHref, afterHref, body) => {
@@ -79,9 +80,10 @@ function renderServiceLinks(content, serviceLinks = {}) {
 
 module.exports = function pageLayout(page, fragment) {
   const linkedContent = renderServiceLinks(fragment.pageContentBetweenShell, page.serviceLinks);
-  const content = linkedContent.includes('<main')
-    ? linkedContent.replace('<main', '<main id="main-content" tabindex="-1"')
-    : `<main id="main-content" tabindex="-1">\n${linkedContent}\n</main>`;
+  const iconContent = replaceFontAwesomeIcons(linkedContent);
+  const content = iconContent.includes('<main')
+    ? iconContent.replace('<main', '<main id="main-content" tabindex="-1"')
+    : `<main id="main-content" tabindex="-1">\n${iconContent}\n</main>`;
   const renderedContent = page.formFallbackAction
     ? content.replace(
       '<form id="contact-form"',
