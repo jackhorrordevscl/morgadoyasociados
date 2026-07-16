@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pages } = require('../src/data/pages');
 const { site, escapeHtmlAttribute } = require('../src/data/site');
+const pageLayout = require('../src/layouts/page');
+const { icon, replaceFontAwesomeIcons } = require('../src/partials/icon');
 
 const webRoot = path.resolve(__dirname, '..', 'web');
 const navLabels = {
@@ -27,6 +29,10 @@ const commonScripts = [
   'assets/nav.js',
   'assets/animations.js',
 ];
+const scaledIcon = replaceFontAwesomeIcons('<i class="fa-solid fa-scale-balanced fa-2x text-(--copper)" aria-hidden="true"></i>');
+assert.match(scaledIcon, /<svg class="text-\(--copper\)" width="2em" height="2em"/, 'Font Awesome scale classes become controlled SVG dimensions');
+assert.doesNotMatch(scaledIcon, /fa-2x/, 'Converted icons exclude obsolete Font Awesome classes');
+assert.match(icon('bars', 'h-4 w-4'), /class="h-4 w-4" width="1em" height="1em"/, 'Helper icons retain their supplied utility classes over the fallback dimensions');
 
 assert.deepEqual(
   fs.readdirSync(webRoot).filter((file) => file.endsWith('.html')).sort(),
@@ -58,8 +64,20 @@ for (const page of pages) {
   if (page.activeNav && page.navAriaCurrent !== false) {
     assert.match(html, new RegExp(`<a href="${navHrefs[page.activeNav]}" aria-current="page" class="[^"]*">${navLabels[page.activeNav]}<\/a>`));
   }
-  if (page.filename === 'derecho-familia.html') {
-    assert.match(html, /<li aria-current="page" class="font-medium text-\(--copper\)">Derecho de Familia<\/li>/);
+  if (['derecho-familia.html', 'educacional.html', 'inmobiliaria.html', 'penal.html', 'civil.html', 'laboral.html', 'decreto-ley-2695.html', 'administrativo.html', 'aeronautico.html'].includes(page.filename)) {
+    const labels = {
+      'derecho-familia.html': 'Derecho de Familia',
+      'educacional.html': 'Derecho Educacional',
+      'inmobiliaria.html': 'Inmobiliaria',
+      'penal.html': 'Derecho Penal',
+      'civil.html': 'Derecho Civil',
+      'laboral.html': 'Derecho Laboral',
+      'decreto-ley-2695.html': 'Decreto Ley 2.695',
+      'administrativo.html': 'Derecho Administrativo',
+      'aeronautico.html': 'Derecho Aeronáutico',
+    };
+    const label = labels[page.filename];
+    assert.match(html, new RegExp(`<li aria-current="page" class="font-medium text-\\(--copper\\)">${label}<\\/li>`));
   }
   if (page.footerCurrent === 'ethics') {
     assert.match(html, /<a href="etica-legal\.html" aria-current="page" class="hover:text-white transition-colors">Ética Profesional<\/a>/);
@@ -70,6 +88,8 @@ for (const page of pages) {
   assert.equal(html.includes('assets/contact.js'), page.optionalScript === 'assets/contact.js', `${page.filename} contact script contract`);
   assert.equal(html.includes('application/ld+json'), Boolean(page.jsonLd), `${page.filename} JSON-LD contract`);
   assert.equal(html.includes('https://images.unsplash.com" crossorigin'), Boolean(page.preconnectUnsplash), `${page.filename} Unsplash preconnect contract`);
+  assert.match(html, /https:\/\/fonts\.googleapis\.com\/css2\?family=Playfair\+Display:ital,wght@0,400;0,600;1,400;1,600&amp;family=Inter:wght@400;500;600&amp;display=swap/, `${page.filename} only loads used font variants`);
+  assert.doesNotMatch(html, /cdnjs\.cloudflare\.com|font-awesome|fa-(?:solid|regular|brands)/, `${page.filename} excludes Font Awesome assets and classes`);
 }
 
 const contact = fs.readFileSync(path.join(webRoot, 'contact.html'), 'utf8');
@@ -83,6 +103,28 @@ for (const value of ['id="contact-form"', 'id="f-name"', 'id="f-email"', 'id="f-
   assert.ok(contact.includes(value), `Contact form preserves ${value}`);
 }
 assert.match(contact, /legal\.html#privacidad/);
+assert.match(contact, /<svg class="[^"]*"[^>]*aria-hidden="true"[^>]*><(?:circle|path)/, 'Contact icons remain decorative for assistive technology');
+
+const servicePage = pages.find((page) => page.filename === 'services.html');
+const serviceCardMarkup = pageLayout(servicePage, {
+  shellOpenBeforeHeader: '',
+  pageContentBetweenShell: '<div class="svc"><div><h3 class="title">Penal</h3></div></div><a href="#areas">Civil</a><div class="svc"><h3>Familia</h3></div>',
+  shellCloseAfterFooter: '',
+});
+assert.match(serviceCardMarkup, /<a href="penal\.html" class="svc block"><div><h3 class="title">Penal<\/h3><\/div><\/a>/, 'A mapped service card remains a block-level link without changing its contents');
+assert.match(serviceCardMarkup, /<a href="civil\.html">Civil<\/a>/, 'Existing service anchors keep their destination rewrite');
+assert.match(serviceCardMarkup, /<div class="svc"><h3>Familia<\/h3><\/div>/, 'Unmapped service cards remain unchanged');
+
+const services = fs.readFileSync(path.join(webRoot, 'services.html'), 'utf8');
+for (const [label, href] of Object.entries(servicePage.serviceLinks)) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedHref = href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.match(
+    services,
+    new RegExp(`<a href="${escapedHref}" class="(?=[^"]*\\bsvc\\b)(?=[^"]*\\bblock\\b)[^"]*"[^>]*>[\\s\\S]*?<h3[^>]*>${escapedLabel}<\\/h3>`),
+    `${label} service card remains a block-level link to ${href}`,
+  );
+}
 
 const contactScript = fs.readFileSync(path.join(webRoot, 'assets', 'contact.js'), 'utf8');
 assert.match(contactScript, /event\.preventDefault\(\)/, 'The enhanced form prevents native navigation');
