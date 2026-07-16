@@ -1,6 +1,7 @@
 const brand = require('./brand');
 const consultationCta = require('./cta');
 const { navigation } = require('../data/navigation');
+const { icon } = require('./icon');
 
 function navLink([key, href, label], page, mobile) {
   const active = page.activeNav === key;
@@ -18,7 +19,7 @@ module.exports = function header(page) {
     <div class="shrink-0">${brand('short', 'light')}</div>
     <ul class="hidden lg:flex items-center gap-9 text-[13px] tracking-wide text-(--charcoal)/85">${navigation.map((item) => `<li>${navLink(item, page, false)}</li>`).join('')}</ul>
     <div class="hidden sm:flex lg:flex items-center">${consultationCta(cta, 'shrink-0 inline-flex items-center gap-2 rounded-full bg-(--rose-dark) px-5 py-2.5 text-[13px] font-medium text-white transition-colors')}</div>
-    <button type="button" class="lg:hidden grid h-10 w-10 place-items-center rounded-full border border-(--beige-dark)/40 text-(--rose-dark)" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu" data-mobile-toggle><i class="fa-solid fa-bars text-sm" aria-hidden="true"></i></button>
+    <button type="button" class="lg:hidden grid h-10 w-10 place-items-center rounded-full border border-(--beige-dark)/40 text-(--rose-dark)" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu" data-mobile-toggle>${icon('bars', 'h-4 w-4')}</button>
   </nav>
   <div id="mobile-menu" class="mobile-menu lg:hidden mx-auto mt-3 max-w-340 rounded-lg border border-white/50 bg-white/90 backdrop-blur-md p-4 shadow-[0_18px_44px_-24px_rgba(58,50,53,0.5)]" data-mobile-menu><div class="grid gap-1 text-[15px] text-(--charcoal)">${navigation.map((item) => navLink(item, page, true)).join('')}</div>${consultationCta(cta, 'mt-3 flex items-center justify-center gap-2 rounded-full bg-(--rose-dark) px-5 py-3 text-sm font-medium text-white transition-colors')}</div>
 </header>`;
