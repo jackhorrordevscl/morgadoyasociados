@@ -54,7 +54,7 @@ for (const page of pages) {
   assert.match(html, /data-mobile-toggle/);
   assert.match(html, /aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu"/);
   assert.match(html, /id="mobile-menu"[^>]*data-mobile-menu/);
-  assert.match(html, /<ul class="hidden lg:flex items-center/);
+  assert.match(html, /<ul class="hidden xl:flex items-center/);
   assert.match(html, /Agende su consulta/);
   assert.match(html, /<a href="index\.html" class="[^"]*\bbrand-link\b[^"]*">/, `${page.filename} keeps the shared brand link`);
   assert.ok(html.includes(`src="${site.brandMarkSvg}"`), `${page.filename} uses the configured brand mark`);
