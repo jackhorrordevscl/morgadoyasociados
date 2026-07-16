@@ -94,7 +94,7 @@ for (const page of pages) {
   if (page.footerCurrent === 'ethics') {
     assert.match(html, /<a href="etica-legal\.html" aria-current="page" class="hover:text-white transition-colors">Ética Profesional<\/a>/);
   }
-  assert.ok(html.includes('src="assets/nav.js"'), `${page.filename} keeps shared navigation behavior`);
+  assert.ok(html.includes('defer src="assets/nav.js"'), `${page.filename} defers shared navigation behavior`);
   const positions = animationScripts.map((script) => html.indexOf(`src="${script}"`));
   if (page.usesAnimations) {
     assert.ok(positions.every((position) => position >= 0), `${page.filename} keeps animation assets`);
@@ -102,7 +102,19 @@ for (const page of pages) {
   } else {
     assert.ok(positions.every((position) => position < 0), `${page.filename} omits unused animation assets`);
   }
-  assert.equal(html.includes('assets/contact.js'), page.optionalScript === 'assets/contact.js', `${page.filename} contact script contract`);
+  const pageScripts = [
+    ...(page.usesAnimations ? animationScripts.slice(0, 2) : []),
+    'assets/nav.js',
+    ...(page.usesAnimations ? animationScripts.slice(2) : []),
+    ...(page.optionalScript ? [page.optionalScript] : []),
+  ];
+  const pageScriptPositions = pageScripts.map((script) => html.indexOf(`src="${script}"`));
+  assert.ok(pageScriptPositions.every((position) => position >= 0), `${page.filename} keeps its required scripts`);
+  assert.deepEqual([...pageScriptPositions].sort((a, b) => a - b), pageScriptPositions, `${page.filename} preserves script order`);
+  for (const script of pageScripts) {
+    assert.ok(html.includes(`defer src="${script}"`), `${page.filename} defers ${script}`);
+  }
+  assert.equal(html.includes('defer src="assets/contact.js"'), page.optionalScript === 'assets/contact.js', `${page.filename} deferred contact script contract`);
   assert.equal(html.includes('application/ld+json'), Boolean(page.jsonLd), `${page.filename} JSON-LD contract`);
   assert.equal(html.includes('https://images.unsplash.com" crossorigin'), Boolean(page.preconnectUnsplash), `${page.filename} Unsplash preconnect contract`);
   assert.equal(html.includes('https://cdn.jsdelivr.net" crossorigin'), Boolean(page.usesAnimations), `${page.filename} animation CDN preconnect contract`);
