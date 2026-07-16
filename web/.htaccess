@@ -35,6 +35,23 @@ RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}
     </IfModule>
 </FilesMatch>
 
+# Compress text and structured responses only when the corresponding modules exist.
+<IfModule mod_filter.c>
+    <IfModule mod_brotli.c>
+        AddOutputFilterByType BROTLI_COMPRESS text/html text/css application/javascript text/javascript image/svg+xml application/xml text/xml application/json
+    </IfModule>
+    <IfModule mod_deflate.c>
+        AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript image/svg+xml application/xml text/xml application/json
+    </IfModule>
+</IfModule>
+
+# Versionless assets must be revalidated frequently instead of cached immutably.
+<FilesMatch "\.(css|js|svg)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "max-age=3600, must-revalidate"
+    </IfModule>
+</FilesMatch>
+
 # php -- BEGIN cPanel-generated handler, do not edit
 # Set the "ea-php84" package as the default "PHP" programming language.
 <IfModule mime_module>
