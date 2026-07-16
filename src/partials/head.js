@@ -6,6 +6,7 @@ function jsonLd(canonical) {
 
 module.exports = function head(page) {
   const unsplash = page.preconnectUnsplash ? '\n<link rel="preconnect" href="https://images.unsplash.com" crossorigin>' : '';
+  const animationCdn = page.usesAnimations ? '\n<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>' : '';
   return `<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,8 +33,7 @@ module.exports = function head(page) {
 <meta name="twitter:description" content="${escapeHtmlAttribute(page.description)}">
 <meta name="twitter:image" content="${escapeHtmlAttribute(site.socialImage)}">
 <meta name="twitter:image:alt" content="${escapeHtmlAttribute(site.socialImageAlt)}">${page.jsonLd ? `\n${jsonLd(page.canonical)}` : ''}
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>${unsplash}
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${animationCdn}${unsplash}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&amp;family=Inter:wght@400;500;600&amp;display=swap">
 <link rel="stylesheet" href="assets/tailwind.css">
 <link rel="stylesheet" href="assets/site.css">
