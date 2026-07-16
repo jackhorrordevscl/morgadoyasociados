@@ -72,7 +72,8 @@ function startServer() {
     assert.equal(await toggle.evaluate((button) => document.activeElement === button), true, 'Closing before the next frame does not focus hidden menu content');
 
     await toggle.click();
-    const currentPageLink = page.locator('[data-mobile-menu] a[aria-current="page"]');
+    await page.locator('[data-mobile-services] summary').click();
+    const currentPageLink = page.locator('[data-mobile-services] a[aria-current="page"]');
     await currentPageLink.evaluate((link) => link.addEventListener('click', (event) => event.preventDefault(), { once: true }));
     await currentPageLink.click();
     assert.equal(await toggle.getAttribute('aria-expanded'), 'false', 'Selecting the current page closes the mobile menu');
@@ -86,6 +87,22 @@ function startServer() {
     assert.equal(await toggle.getAttribute('aria-expanded'), 'false', 'Selecting the contact fragment closes the mobile menu');
     assert.equal(await page.locator('#f-name').evaluate((input) => document.activeElement === input), true, "Selecting the contact fragment moves focus to the form's first visible field");
     await page.close();
+
+    const desktop = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    await desktop.goto(`http://127.0.0.1:${port}/services.html`);
+    const servicesToggle = desktop.locator('[data-services-toggle]');
+    const servicesPanel = desktop.locator('[data-services-panel]');
+    await servicesToggle.click();
+    assert.equal(await servicesToggle.getAttribute('aria-expanded'), 'true', 'Opening the desktop services menu updates the toggle state');
+    assert.equal(await servicesPanel.isVisible(), true, 'Opening the desktop services menu reveals the practice-area links');
+    await servicesToggle.press('ArrowDown');
+    assert.equal(await servicesPanel.locator('a').first().evaluate((link) => document.activeElement === link), true, 'ArrowDown moves focus into the desktop services menu');
+    await desktop.keyboard.press('End');
+    assert.equal(await servicesPanel.locator('a').last().evaluate((link) => document.activeElement === link), true, 'End moves focus to the final practice-area link');
+    await desktop.keyboard.press('Escape');
+    assert.equal(await servicesToggle.getAttribute('aria-expanded'), 'false', 'Escape closes the desktop services menu');
+    assert.equal(await servicesToggle.evaluate((button) => document.activeElement === button), true, 'Escape returns focus to the desktop services toggle');
+    await desktop.close();
   } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));

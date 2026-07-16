@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pages } = require('../src/data/pages');
+const { serviceAreas } = require('../src/data/navigation');
 const { site, escapeHtmlAttribute } = require('../src/data/site');
 const pageLayout = require('../src/layouts/page');
 const { icon, replaceFontAwesomeIcons } = require('../src/partials/icon');
@@ -55,6 +56,10 @@ for (const page of pages) {
   assert.match(html, /aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu"/);
   assert.match(html, /id="mobile-menu"[^>]*data-mobile-menu/);
   assert.match(html, /<ul class="hidden xl:flex items-center/);
+  assert.match(html, /data-services-menu/);
+  assert.match(html, /data-services-toggle/);
+  assert.match(html, /id="services-menu"[^>]*hidden[^>]*data-services-panel/);
+  assert.match(html, /<details class="rounded-xl[^>]*data-mobile-services>/);
   assert.match(html, /Agende su consulta/);
   assert.match(html, /<a href="index\.html" class="[^"]*\bbrand-link\b[^"]*">/, `${page.filename} keeps the shared brand link`);
   assert.ok(html.includes(`src="${site.brandMarkSvg}"`), `${page.filename} uses the configured brand mark`);
@@ -90,6 +95,18 @@ for (const page of pages) {
   assert.equal(html.includes('https://images.unsplash.com" crossorigin'), Boolean(page.preconnectUnsplash), `${page.filename} Unsplash preconnect contract`);
   assert.match(html, /https:\/\/fonts\.googleapis\.com\/css2\?family=Playfair\+Display:ital,wght@0,400;0,600;1,400;1,600&amp;family=Inter:wght@400;500;600&amp;display=swap/, `${page.filename} only loads used font variants`);
   assert.doesNotMatch(html, /cdnjs\.cloudflare\.com|font-awesome|fa-(?:solid|regular|brands)/, `${page.filename} excludes Font Awesome assets and classes`);
+}
+
+const index = fs.readFileSync(path.join(webRoot, 'index.html'), 'utf8');
+for (const [, href, label] of serviceAreas) {
+  const escapedHref = href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.match(index, new RegExp(`<a href="${escapedHref}"[^>]*>${escapedLabel}<\\/a>`), `${label} is available from the service navigation`);
+}
+
+const navigationScript = fs.readFileSync(path.join(webRoot, 'assets', 'nav.js'), 'utf8');
+for (const behavior of ['data-services-toggle', 'ArrowDown', 'ArrowUp', 'Home', 'End', 'pointerdown', 'data-mobile-services']) {
+  assert.ok(navigationScript.includes(behavior), `Service navigation retains ${behavior} behavior`);
 }
 
 const contact = fs.readFileSync(path.join(webRoot, 'contact.html'), 'utf8');
