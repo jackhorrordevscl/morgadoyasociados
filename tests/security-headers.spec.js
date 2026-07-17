@@ -5,6 +5,17 @@ const path = require('node:path');
 const webRoot = path.resolve(__dirname, '..', 'web');
 const expectedCsp = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com; connect-src 'self'; frame-src https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
 const htaccess = fs.readFileSync(path.join(webRoot, '.htaccess'), 'utf8');
+const canonicalHostRedirect = [
+  'RewriteCond %{HTTP_HOST} ^www\\.morgadoyasociados\\.cl$ [NC]',
+  'RewriteRule ^ https://morgadoyasociados.cl%{REQUEST_URI} [R=301,L,NE]',
+].join('\n');
+
+assert.ok(htaccess.includes(canonicalHostRedirect));
+assert.match(canonicalHostRedirect, /\[R=301,L(?:,|\])/);
+assert.ok(
+  htaccess.indexOf(canonicalHostRedirect) < htaccess.indexOf('RewriteCond %{HTTPS} off'),
+  'The canonical-host redirect must precede the HTTPS redirect.',
+);
 
 assert.match(htaccess, new RegExp(`Header always set Content-Security-Policy "${expectedCsp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
 assert.match(htaccess, /Header always set X-Content-Type-Options "nosniff"/);
