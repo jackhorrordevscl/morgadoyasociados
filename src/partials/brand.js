@@ -11,5 +11,5 @@ module.exports = function brand(variant = 'short', surface = 'dark') {
     ? 'font-serif text-(--rose-dark) text-[15.5px] leading-tight'
     : 'font-serif text-white text-[15.5px] leading-tight';
 
-  return `<a href="index.html" class="brand-link flex items-center gap-3.5"><span class="brand-chip ${chipClasses}"><img src="${site.brandMarkSvg}" alt="" aria-hidden="true" class="${markClasses}"></span><span class="${textClasses}">${isLong ? site.brandLongHtml : site.brandShortHtml}</span></a>`;
+  return `<a href="index.html" class="brand-link flex items-center gap-3.5"><span class="brand-chip ${chipClasses}"><img src="${site.brandMark}" alt="" aria-hidden="true" class="${markClasses}"></span><span class="${textClasses}">${isLong ? site.brandLongHtml : site.brandShortHtml}</span></a>`;
 };

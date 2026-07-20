@@ -4,7 +4,7 @@ const site = {
   brandLongHtml: 'Asesoría Legal Morgado, Cía. &amp; Asociados',
   brandShortHtml: 'Morgado, Cía. &amp; Asociados',
   brandLongText: 'Asesoría Legal Morgado, Cía. & Asociados',
-  brandMarkSvg: 'img/2.svg',
+  brandMark: 'img/logo.jpeg',
   ctaInitial: 'Agende su consulta',
   defaultRobots: 'index,follow,max-image-preview:large',
   email: 'contacto@morgadoyasociados.cl',
