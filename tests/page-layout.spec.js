@@ -69,7 +69,7 @@ for (const page of pages) {
   assert.match(html, /Agende su consulta/);
   assert.match(html, /<a href="index\.html" class="[^"]*\bbrand-link\b[^"]*">/, `${page.filename} keeps the shared brand link`);
   assert.ok(html.includes(`src="${site.brandMark}"`), `${page.filename} uses the configured brand mark`);
-  assert.match(html, new RegExp(`<img src="${site.brandMark.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}" alt="" aria-hidden="true" class="brand-mark h-6 w-6 object-contain">`), `${page.filename} uses the scaled brand mark`);
+  assert.match(html, new RegExp(`<img src="${site.brandMark.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}" alt="" aria-hidden="true" class="brand-mark h-6 w-6 rounded-full object-cover">`), `${page.filename} uses the scaled brand mark`);
   assert.ok(html.includes(`<a href="${page.contactCta || 'contact.html'}" class="btn-rose`), `${page.filename} keeps the shared consultation CTA`);
   assert.match(html, new RegExp(site.brandShortHtml.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(html, new RegExp(page.footer === 'extended' ? site.brandShortHtml : site.brandLongHtml));

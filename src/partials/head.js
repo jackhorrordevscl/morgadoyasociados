@@ -15,7 +15,7 @@ module.exports = function head(page) {
 <meta name="author" content="${escapeHtmlAttribute(site.brandLongText)}">
 <meta name="robots" content="${escapeHtmlAttribute(page.robots)}">
 <link rel="canonical" href="${escapeHtmlAttribute(page.canonical)}">
-<link rel="icon" href="${escapeHtmlAttribute(site.brandMark)}" type="image/jpeg">
+<link rel="icon" href="${escapeHtmlAttribute(site.brandMark)}" type="image/svg+xml">
 <meta property="og:locale" content="es_CL">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="${escapeHtmlAttribute(site.brandLongText)}">
