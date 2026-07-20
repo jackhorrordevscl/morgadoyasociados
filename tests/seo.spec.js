@@ -43,13 +43,13 @@ for (const page of pages) {
     for (const entry of structuredData['@graph']) {
       assert.equal(entry.name, 'Asesoría Legal Morgado, Cía. & Asociados');
       assert.match(entry.url, /^https:\/\/morgadoyasociados\.cl\/(?:contact\.html)?$/);
-      assert.equal(entry.telephone, '+56 2 2345 6789');
+      assert.equal(entry.telephone, '+56 2 2638 1456');
       assert.equal(entry.email, 'contacto@morgadoyasociados.cl');
       assert.equal(entry.areaServed, 'Chile');
       assert.equal(entry.openingHours, 'Mo-Fr 09:00-18:00');
       assert.deepEqual(entry.address, {
         '@type': 'PostalAddress',
-        streetAddress: 'Av. Providencia 1234, Of. 802',
+        streetAddress: 'Santa Lucía 270, Piso 6, Of. 601',
         addressLocality: 'Santiago',
         addressRegion: 'Región Metropolitana',
         addressCountry: 'CL',
