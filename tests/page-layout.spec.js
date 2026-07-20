@@ -152,8 +152,8 @@ assert.match(home, /srcset="https:\/\/images\.unsplash\.com\/photo-1627518788331
 
 const about = fs.readFileSync(path.join(webRoot, 'about.html'), 'utf8');
 assert.strictEqual((about.match(/alt="Foto próximamente"/g) || []).length, 4, 'The team grid shows four placeholder portraits');
-assert.strictEqual((about.match(/src="img\/silueta-hombre\.jpg"/g) || []).length, 2, 'Two team placeholders use the male silhouette');
-assert.strictEqual((about.match(/src="img\/silueta-mujer\.png"/g) || []).length, 2, 'Two team placeholders use the female silhouette');
+assert.strictEqual((about.match(/src="img\/silueta-hombre\.webp"/g) || []).length, 2, 'Two team placeholders use the male silhouette');
+assert.strictEqual((about.match(/src="img\/silueta-mujer\.webp"/g) || []).length, 2, 'Two team placeholders use the female silhouette');
 assert.strictEqual((about.match(/>Próximamente</g) || []).length, 13, 'Team name, role, bio, and the quote attribution are all placeholders');
 
 const servicePage = pages.find((page) => page.filename === 'services.html');
