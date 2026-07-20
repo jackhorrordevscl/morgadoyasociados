@@ -19,7 +19,7 @@
     "test": "npm run build:css && npm run test:pages && npm run test:responsive && npm run test:links && npm run test:mail && npm run test:health && npm run test:health-monitor && npm run test:seo && npm run test:security"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.3.2",
+    "@tailwindcss/cli": "^4.3.3",
     "playwright": "^1.61.1",
     "tailwindcss": "^4.3.2"
   }
