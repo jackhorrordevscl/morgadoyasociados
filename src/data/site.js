@@ -14,6 +14,7 @@ const site = {
     streetAddress: 'Santa Lucía 270, Piso 6, Of. 601',
     addressLocality: 'Santiago',
     addressRegion: 'Región Metropolitana',
+    postalCode: '8320190',
     addressCountry: 'CL',
   },
   socialImage: 'https://images.unsplash.com/photo-1627518788331-b3b7fdaa382f?auto=format&fit=crop&w=1200&h=630&q=80',
@@ -37,6 +38,7 @@ function organizationJsonLd(canonical, type, id) {
     telephone: site.phone,
     email: site.email,
     address: site.address,
+    image: `${site.baseUrl}/${site.brandMark}`,
     areaServed: 'Chile',
     openingHours: 'Mo-Fr 09:00-18:00',
   };
@@ -58,6 +60,7 @@ function serviceJsonLd(canonical, serviceType, description) {
       telephone: site.phone,
       email: site.email,
       address: site.address,
+      image: `${site.baseUrl}/${site.brandMark}`,
     },
   };
 }

@@ -47,11 +47,13 @@ for (const page of pages) {
       assert.equal(entry.email, 'contacto@morgadoyasociados.cl');
       assert.equal(entry.areaServed, 'Chile');
       assert.equal(entry.openingHours, 'Mo-Fr 09:00-18:00');
+      assert.equal(entry.image, 'https://morgadoyasociados.cl/img/logo.png');
       assert.deepEqual(entry.address, {
         '@type': 'PostalAddress',
         streetAddress: 'Santa Lucía 270, Piso 6, Of. 601',
         addressLocality: 'Santiago',
         addressRegion: 'Región Metropolitana',
+        postalCode: '8320190',
         addressCountry: 'CL',
       });
     }
@@ -69,6 +71,8 @@ for (const page of pages) {
     assert.equal(structuredData.provider['@type'], 'LegalService');
     assert.equal(structuredData.provider.name, 'Asesoría Legal Morgado, Cía. & Asociados');
     assert.equal(structuredData.provider.telephone, '+56 2 2638 1456');
+    assert.equal(structuredData.provider.image, 'https://morgadoyasociados.cl/img/logo.png');
+    assert.equal(structuredData.provider.address.postalCode, '8320190');
   }
 }
 
