@@ -151,9 +151,10 @@ const home = fs.readFileSync(path.join(webRoot, 'index.html'), 'utf8');
 assert.match(home, /srcset="https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=480&q=80&fit=crop 480w, https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=768&q=80&fit=crop 768w, https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=1000&q=80&fit=crop 1000w, https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=1440&q=80&fit=crop 1440w" sizes="\(min-width: 1440px\) 684px, \(min-width: 1024px\) 47\.5vw, 100vw"/, 'The hero has responsive image candidates');
 
 const about = fs.readFileSync(path.join(webRoot, 'about.html'), 'utf8');
-for (const imageId of ['photo-1518556336318-c8de4355ccab', 'photo-1585240975735-4826abe53080', 'photo-1645990543673-53d612fee13e', 'photo-1612283061725-f22721e5a3cd']) {
-  assert.match(about, new RegExp(`${imageId}\\?auto=format&w=176&q=80&fit=crop 176w, https://images\\.unsplash\\.com/${imageId}\\?auto=format&w=352&q=80&fit=crop 352w" sizes="176px"`), `${imageId} has responsive portrait candidates`);
-}
+assert.strictEqual((about.match(/alt="Foto próximamente"/g) || []).length, 4, 'The team grid shows four placeholder portraits');
+assert.strictEqual((about.match(/src="img\/silueta-hombre\.jpg"/g) || []).length, 2, 'Two team placeholders use the male silhouette');
+assert.strictEqual((about.match(/src="img\/silueta-mujer\.png"/g) || []).length, 2, 'Two team placeholders use the female silhouette');
+assert.strictEqual((about.match(/>Próximamente</g) || []).length, 13, 'Team name, role, bio, and the quote attribution are all placeholders');
 
 const servicePage = pages.find((page) => page.filename === 'services.html');
 const serviceCardMarkup = pageLayout(servicePage, {
