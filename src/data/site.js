@@ -42,6 +42,26 @@ function organizationJsonLd(canonical, type, id) {
   };
 }
 
+function serviceJsonLd(canonical, serviceType, description) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    serviceType,
+    name: `${serviceType} | ${site.brandLongText}`,
+    description,
+    url: canonical,
+    areaServed: 'Chile',
+    provider: {
+      '@type': 'LegalService',
+      '@id': `${site.baseUrl}/#legalservice`,
+      name: site.brandLongText,
+      telephone: site.phone,
+      email: site.email,
+      address: site.address,
+    },
+  };
+}
+
 function escapeHtmlAttribute(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -50,4 +70,4 @@ function escapeHtmlAttribute(value) {
     .replace(/>/g, '&gt;');
 }
 
-module.exports = { site, titleFor, canonicalFor, organizationJsonLd, escapeHtmlAttribute };
+module.exports = { site, titleFor, canonicalFor, organizationJsonLd, serviceJsonLd, escapeHtmlAttribute };

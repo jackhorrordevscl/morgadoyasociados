@@ -56,6 +56,20 @@ for (const page of pages) {
       });
     }
   }
+
+  if (page.practiceArea) {
+    const scriptMatch = html.match(/<script type="application\/ld\+json">\s*([\s\S]*?)\s*<\/script>/);
+    assert.ok(scriptMatch, `${page.filename} is missing its Service JSON-LD`);
+    const structuredData = JSON.parse(scriptMatch[1]);
+    assert.equal(structuredData['@context'], 'https://schema.org');
+    assert.equal(structuredData['@type'], 'Service');
+    assert.equal(structuredData.serviceType, page.practiceArea);
+    assert.equal(structuredData.url, page.canonical);
+    assert.equal(structuredData.areaServed, 'Chile');
+    assert.equal(structuredData.provider['@type'], 'LegalService');
+    assert.equal(structuredData.provider.name, 'Asesoría Legal Morgado, Cía. & Asociados');
+    assert.equal(structuredData.provider.telephone, '+56 2 2638 1456');
+  }
 }
 
 const robots = fs.readFileSync(path.join(webRoot, 'robots.txt'), 'utf8');

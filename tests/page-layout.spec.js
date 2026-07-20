@@ -115,7 +115,7 @@ for (const page of pages) {
     assert.ok(html.includes(`defer src="${script}"`), `${page.filename} defers ${script}`);
   }
   assert.equal(html.includes('defer src="assets/contact.js"'), page.optionalScript === 'assets/contact.js', `${page.filename} deferred contact script contract`);
-  assert.equal(html.includes('application/ld+json'), Boolean(page.jsonLd), `${page.filename} JSON-LD contract`);
+  assert.equal(html.includes('application/ld+json'), Boolean(page.jsonLd || page.practiceArea), `${page.filename} JSON-LD contract`);
   assert.equal(html.includes('https://images.unsplash.com" crossorigin'), Boolean(page.preconnectUnsplash), `${page.filename} Unsplash preconnect contract`);
   assert.equal(html.includes('https://cdn.jsdelivr.net" crossorigin'), Boolean(page.usesAnimations), `${page.filename} animation CDN preconnect contract`);
   assert.match(html, /https:\/\/fonts\.googleapis\.com\/css2\?family=Playfair\+Display:ital,wght@0,400;0,600;1,400;1,600&amp;family=Inter:wght@400;500;600&amp;display=swap/, `${page.filename} only loads used font variants`);

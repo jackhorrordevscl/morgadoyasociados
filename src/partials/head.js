@@ -1,7 +1,11 @@
-const { site, organizationJsonLd, escapeHtmlAttribute } = require('../data/site');
+const { site, organizationJsonLd, serviceJsonLd, escapeHtmlAttribute } = require('../data/site');
 
 function jsonLd(canonical) {
   return `<script type="application/ld+json">\n${JSON.stringify({ '@context': 'https://schema.org', '@graph': [organizationJsonLd(canonical, 'LegalService', 'legalservice'), organizationJsonLd(canonical, 'LocalBusiness', 'localbusiness')] }, null, 2)}\n</script>`;
+}
+
+function serviceSchema(page) {
+  return `<script type="application/ld+json">\n${JSON.stringify(serviceJsonLd(page.canonical, page.practiceArea, page.description), null, 2)}\n</script>`;
 }
 
 module.exports = function head(page) {
@@ -32,7 +36,7 @@ module.exports = function head(page) {
 <meta name="twitter:title" content="${escapeHtmlAttribute(page.title)}">
 <meta name="twitter:description" content="${escapeHtmlAttribute(page.description)}">
 <meta name="twitter:image" content="${escapeHtmlAttribute(site.socialImage)}">
-<meta name="twitter:image:alt" content="${escapeHtmlAttribute(site.socialImageAlt)}">${page.jsonLd ? `\n${jsonLd(page.canonical)}` : ''}
+<meta name="twitter:image:alt" content="${escapeHtmlAttribute(site.socialImageAlt)}">${page.jsonLd ? `\n${jsonLd(page.canonical)}` : ''}${page.practiceArea ? `\n${serviceSchema(page)}` : ''}
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>${animationCdn}${unsplash}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&amp;family=Inter:wght@400;500;600&amp;display=swap">
 <link rel="stylesheet" href="assets/tailwind.css">
