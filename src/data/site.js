@@ -8,10 +8,10 @@ const site = {
   ctaInitial: 'Agende su consulta',
   defaultRobots: 'index,follow,max-image-preview:large',
   email: 'contacto@morgadoyasociados.cl',
-  phone: '+56 2 2345 6789',
+  phone: '+56 2 2638 1456',
   address: {
     '@type': 'PostalAddress',
-    streetAddress: 'Av. Providencia 1234, Of. 802',
+    streetAddress: 'Santa Lucía 270, Piso 6, Of. 601',
     addressLocality: 'Santiago',
     addressRegion: 'Región Metropolitana',
     addressCountry: 'CL',
