@@ -8,7 +8,7 @@ const PUBLIC_PAGE_MONITOR_URL = 'https://morgadoyasociados.cl/';
 const PUBLIC_PAGE_EXPECTED_MARKER = '<body data-page="home">';
 const PUBLIC_ASSET_MONITOR_URL = 'https://morgadoyasociados.cl/assets/site.css';
 const HEALTH_MONITOR_TIMEOUT_SECONDS = 10;
-const HEALTH_MONITOR_MAX_RESPONSE_BYTES = 4096;
+const HEALTH_MONITOR_MAX_RESPONSE_BYTES = 16384;
 
 function executionSapi(): string
 {
