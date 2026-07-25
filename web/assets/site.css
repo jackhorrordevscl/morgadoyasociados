@@ -21,6 +21,12 @@ html, body { margin: 0; padding: 0; }
 
 .lp-root { background-color: var(--beige-light); color: var(--charcoal); font-family: 'Inter', sans-serif; overflow-x: clip; }
 
+/* --rose-light (#D9A5AE) on --rose-dark only reaches ~3.0:1, below the 4.5:1
+   WCAG AA minimum for normal-size text. This lighter tone is scoped to the
+   small footer tagline instead of changing --rose-light globally, since that
+   variable is also used at larger sizes and on other backgrounds elsewhere. */
+.footer-tagline { color: #F0D5DA; }
+
 .skip-link {
   position: fixed;
   top: 1rem;
