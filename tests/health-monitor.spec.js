@@ -11,6 +11,7 @@ const fixturesRoot = path.join(__dirname, 'fixtures');
 const localWindowsPhp = 'C:\\tools\\php85\\php.exe';
 const phpBinary = process.env.PHP_BINARY
   || (process.platform === 'win32' && fs.existsSync(localWindowsPhp) ? localWindowsPhp : 'php');
+const allowLocalhostFixture = path.join(fixturesRoot, 'health-monitor-allow-localhost.php');
 
 function startServer(handler) {
   return new Promise((resolve, reject) => {
@@ -27,8 +28,14 @@ function startServer(handler) {
 }
 
 function runMonitor(url, phpArgs = [], extraEnv = {}) {
+  const hasCustomPrepend = phpArgs.some(
+    (arg) => typeof arg === 'string' && arg.startsWith('auto_prepend_file='),
+  );
+  const args = hasCustomPrepend
+    ? phpArgs
+    : [...phpArgs, '-d', `auto_prepend_file=${allowLocalhostFixture}`];
   return new Promise((resolve, reject) => {
-    const child = spawn(phpBinary, [...phpArgs, monitorPath], {
+    const child = spawn(phpBinary, [...args, monitorPath], {
       env: { ...process.env, HEALTH_MONITOR_URL: url, ...extraEnv },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -147,6 +154,9 @@ async function run() {
 
   const invalidUrlResult = await runMonitor('file:///private/health.php');
   assertFailure(invalidUrlResult, 'invalid health URL', [/private|file/i]);
+
+  const ssrfResult = await runMonitor('https://attacker.example/health.php', ['-n']);
+  assertFailure(ssrfResult, 'invalid health URL', [/attacker/i]);
 
   const closedPort = await reserveClosedPort();
   const connectionFailureResult = await runMonitor(`http://127.0.0.1:${closedPort}/health.php`);
