@@ -31,14 +31,14 @@ function createTestWebRoot(tempRoot, name) {
   return destination;
 }
 
-function writeMailConfig(documentRoot, smtpPort) {
+function writeMailConfig(documentRoot, smtpPort, secure = 'tls') {
   fs.writeFileSync(path.join(documentRoot, 'mail-config.php'), `<?php
 return [
     'smtp_host' => '127.0.0.1',
     'smtp_port' => ${smtpPort},
     'smtp_user' => 'test-sender@example.test',
     'smtp_pass' => 'not-a-secret',
-    'smtp_secure' => 'tls',
+    'smtp_secure' => '${secure}',
     'to_email' => 'test-recipient@example.test',
     'to_name' => 'Local test recipient',
 ];
@@ -128,6 +128,109 @@ async function startSmtpProbe() {
     connections: () => connections,
     stop: () => new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve()))),
   };
+}
+
+/**
+ * Minimal SMTP server that completes the full protocol handshake PHPMailer
+ * drives (EHLO, AUTH LOGIN, MAIL FROM, RCPT TO, DATA, QUIT) so tests can
+ * exercise a genuinely successful delivery instead of only opening a TCP
+ * socket. It deliberately does not advertise a STARTTLS extension, and the
+ * caller must configure `smtp_secure` to a value other than 'tls'/'ssl' so
+ * PHPMailer's SMTPAutoTLS does not attempt an encrypted handshake this mock
+ * cannot serve.
+ */
+function startSuccessfulSmtpServer() {
+  const deliveries = [];
+  let connectionCount = 0;
+
+  const server = net.createServer((socket) => {
+    connectionCount += 1;
+    const ctx = { authStage: null, mode: 'command', dataBuffer: '', mailFrom: null, rcptTo: null };
+    let buffer = '';
+
+    function handleCommandLine(line) {
+      if (ctx.authStage === 'username') {
+        ctx.authStage = 'password';
+        socket.write('334 UGFzc3dvcmQ6\r\n');
+        return;
+      }
+      if (ctx.authStage === 'password') {
+        ctx.authStage = null;
+        socket.write('235 2.7.0 Authentication successful\r\n');
+        return;
+      }
+
+      const command = line.split(' ')[0].toUpperCase();
+      switch (command) {
+        case 'EHLO':
+        case 'HELO':
+          socket.write('250-localhost greets you\r\n250 AUTH LOGIN PLAIN\r\n');
+          break;
+        case 'AUTH':
+          ctx.authStage = 'username';
+          socket.write('334 VXNlcm5hbWU6\r\n');
+          break;
+        case 'MAIL':
+          ctx.mailFrom = line;
+          socket.write('250 2.1.0 OK\r\n');
+          break;
+        case 'RCPT':
+          ctx.rcptTo = line;
+          socket.write('250 2.1.5 OK\r\n');
+          break;
+        case 'DATA':
+          ctx.mode = 'data';
+          ctx.dataBuffer = '';
+          socket.write('354 End data with <CR><LF>.<CR><LF>\r\n');
+          break;
+        case 'QUIT':
+          socket.write('221 2.0.0 Bye\r\n');
+          socket.end();
+          break;
+        default:
+          socket.write('502 5.5.1 Command not implemented\r\n');
+      }
+    }
+
+    socket.write('220 localhost ESMTP test mock\r\n');
+
+    socket.on('data', (chunk) => {
+      buffer += chunk.toString('utf8');
+
+      if (ctx.mode === 'data') {
+        const terminator = '\r\n.\r\n';
+        const terminatorIndex = buffer.indexOf(terminator);
+        if (terminatorIndex === -1) {
+          return;
+        }
+        ctx.dataBuffer += buffer.slice(0, terminatorIndex);
+        buffer = buffer.slice(terminatorIndex + terminator.length);
+        ctx.mode = 'command';
+        deliveries.push({ mailFrom: ctx.mailFrom, rcptTo: ctx.rcptTo, body: ctx.dataBuffer });
+        socket.write('250 2.0.0 OK: queued as test-mock\r\n');
+      }
+
+      let newlineIndex;
+      while (ctx.mode === 'command' && (newlineIndex = buffer.indexOf('\r\n')) !== -1) {
+        const line = buffer.slice(0, newlineIndex);
+        buffer = buffer.slice(newlineIndex + 2);
+        handleCommandLine(line);
+      }
+    });
+  });
+
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const { port } = server.address();
+      resolve({
+        port,
+        deliveries: () => deliveries,
+        connections: () => connectionCount,
+        stop: () => new Promise((res, rej) => server.close((error) => (error ? rej(error) : res()))),
+      });
+    });
+  });
 }
 
 function lockFixtureRateLimitFile(documentRoot) {
@@ -356,6 +459,77 @@ return [
       );
     } finally {
       await smtpFailureServer.stop();
+    }
+
+    const successSmtp = await startSuccessfulSmtpServer();
+    try {
+      const successRoot = createTestWebRoot(tempRoot, 'smtp-success');
+      writeMailConfig(successRoot, successSmtp.port, 'none');
+      const successServer = await startPhpServer(successRoot);
+      try {
+        clearRateLimit();
+        const response = await post(successServer.baseUrl, validFields);
+        assert.equal(response.status, 200);
+        assert.match(response.headers['content-type'] || '', /^application\/json/);
+        assert.deepEqual(JSON.parse(response.raw), { success: true, message: '' });
+        assert.equal(successSmtp.connections(), 1, 'A successful send must complete exactly one SMTP handshake.');
+
+        const [delivery] = successSmtp.deliveries();
+        assert.ok(delivery, 'The mock SMTP server must record a fully delivered message.');
+        assert.match(delivery.mailFrom, /MAIL FROM:<test-sender@example\.test>/);
+        assert.match(delivery.rcptTo, /RCPT TO:<test-recipient@example\.test>/);
+        assert.match(delivery.body, /Nombre: Prueba local/);
+      } finally {
+        await successServer.stop();
+      }
+    } finally {
+      await successSmtp.stop();
+    }
+
+    const rateLimitSmtp = await startSuccessfulSmtpServer();
+    try {
+      const rateLimitRoot = createTestWebRoot(tempRoot, 'rate-limit-exhaustion');
+      writeMailConfig(rateLimitRoot, rateLimitSmtp.port, 'none');
+      useFixtureRateLimitDirectory(rateLimitRoot);
+
+      // send-mail.php enforces maxRequests: 5 within a 900s window. Seed 4
+      // prior, well-spaced timestamps (each far older than the 15s
+      // minSecondsBetween gate) so the very next real request is the 5th
+      // valid send allowed by the count limit, and the one right after it
+      // is the 6th, which must be rejected purely because the count has
+      // been exhausted. Driving 5 real requests 15s apart would make this
+      // test correct but ~75s slower without exercising a different code
+      // path, so the first 4 "requests" are seeded state instead of live
+      // traffic.
+      const now = Math.floor(Date.now() / 1000);
+      writeFixtureRateLimitState(
+        rateLimitRoot,
+        JSON.stringify({ timestamps: [now - 500, now - 400, now - 300, now - 200] }),
+      );
+
+      const rateLimitServer = await startPhpServer(rateLimitRoot);
+      try {
+        const fifthResponse = await post(rateLimitServer.baseUrl, validFields);
+        assert.equal(fifthResponse.status, 200, 'The 5th valid send within the window must still succeed.');
+        assert.deepEqual(JSON.parse(fifthResponse.raw), { success: true, message: '' });
+
+        const sixthResponse = await post(rateLimitServer.baseUrl, validFields);
+        assert.equal(sixthResponse.status, 429, 'The 6th send must be rejected once the request count is exhausted.');
+        assert.deepEqual(JSON.parse(sixthResponse.raw), {
+          success: false,
+          message: 'Ha enviado demasiadas solicitudes. Por favor intente nuevamente en unos minutos.',
+        });
+
+        assert.equal(
+          rateLimitSmtp.connections(),
+          1,
+          'A rate-limited request must never reach the SMTP server.',
+        );
+      } finally {
+        await rateLimitServer.stop();
+      }
+    } finally {
+      await rateLimitSmtp.stop();
     }
   } finally {
     clearRateLimit();
