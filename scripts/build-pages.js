@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const { pages } = require('../src/data/pages');
 const pageLayout = require('../src/layouts/page');
 
@@ -46,10 +47,29 @@ function writeSources() {
   }
 }
 
+function lastCommitDateFor(absolutePath) {
+  try {
+    const output = execFileSync(
+      'git',
+      ['log', '-1', '--format=%cI', '--', absolutePath],
+      { cwd: root, encoding: 'utf8' },
+    ).trim();
+    if (output) return output;
+  } catch (error) {
+    // Fall through to the build-time fallback below (e.g. git unavailable,
+    // shallow clone missing history, or the file has no commits yet).
+  }
+  return new Date().toISOString();
+}
+
+function lastmodFor(page) {
+  return lastCommitDateFor(path.join(sourceRoot, `${page.slug}.json`));
+}
+
 function writeSitemap() {
   const urls = pages
     .filter((page) => page.sitemap)
-    .map((page) => `  <url><loc>${page.canonical}</loc></url>`);
+    .map((page) => `  <url><loc>${page.canonical}</loc><lastmod>${lastmodFor(page)}</lastmod></url>`);
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
   fs.writeFileSync(path.join(webRoot, 'sitemap.xml'), sitemap);
   console.log('Built sitemap.xml');

@@ -101,4 +101,23 @@ assert.doesNotMatch(sitemap, /legal\.html|etica-legal\.html/);
 const htaccess = fs.readFileSync(path.join(webRoot, '.htaccess'), 'utf8');
 assert.match(htaccess, /Header always set X-Robots-Tag "noindex, nofollow, noarchive"/);
 
-console.log('SEO technical configuration verified.');
+async function verifySocialImageIsReachable() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch(socialImage, { method: 'GET', signal: controller.signal });
+    assert.ok(
+      response.ok,
+      `socialImage returned HTTP ${response.status} for ${socialImage}; a broken og:image/twitter:image would silently ship to production`,
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+verifySocialImageIsReachable()
+  .then(() => console.log('SEO technical configuration verified.'))
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
