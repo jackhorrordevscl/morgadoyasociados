@@ -17,6 +17,15 @@ const site = {
     postalCode: '8320190',
     addressCountry: 'CL',
   },
+  // NOTE (issue #39): og:image/twitter:image is intentionally a single shared
+  // Unsplash URL across all 17 pages. Per-practice-area social images would be
+  // the better fix, but the repo has no real photography for each legal area
+  // (web/img only has the firm logo and two generic silhouette placeholders,
+  // neither of which reads as "per category"). Faking distinct images from
+  // those assets, or inventing new external URLs, would trade one unverified
+  // dependency for another. This is deferred until the client supplies actual
+  // per-area photography; tests/seo.spec.js now fetches this URL for real
+  // (not just string-matches the HTML) so a broken image is caught in CI.
   socialImage: 'https://images.unsplash.com/photo-1627518788331-b3b7fdaa382f?auto=format&fit=crop&w=1200&h=630&q=80',
   socialImageAlt: 'Persona firmando un documento',
 };
