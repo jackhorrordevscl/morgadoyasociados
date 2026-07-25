@@ -76,6 +76,20 @@ async function withResponse(status, body, verify) {
   }
 }
 
+async function withCapturedRequest(status, body, verify) {
+  let capturedHeaders;
+  const server = await startServer((request, response) => {
+    capturedHeaders = request.headers;
+    response.writeHead(status, { 'Content-Type': 'application/json' });
+    response.end(body);
+  });
+  try {
+    await verify(server.url, () => capturedHeaders);
+  } finally {
+    await server.stop();
+  }
+}
+
 async function run() {
   const publicPageServer = await startServer((_request, response) => {
     response.writeHead(200, { 'Content-Type': 'text/html' });
@@ -95,6 +109,26 @@ async function run() {
       assert.equal(result.signal, null);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
+    });
+
+    await withCapturedRequest(200, '{"status":"ok"}', async (url, headers) => {
+      const result = await runMonitor(url, ['-n'], {
+        PUBLIC_PAGE_MONITOR_URL: publicPageServer.url,
+        PUBLIC_ASSET_MONITOR_URL: publicAssetServer.url,
+        HEALTH_CHECK_TOKEN: 'a-shared-secret',
+      });
+      assert.equal(result.code, 0);
+      assert.equal(headers()['x-health-token'], 'a-shared-secret');
+    });
+
+    await withCapturedRequest(200, '{"status":"ok"}', async (url, headers) => {
+      const result = await runMonitor(url, ['-n'], {
+        PUBLIC_PAGE_MONITOR_URL: publicPageServer.url,
+        PUBLIC_ASSET_MONITOR_URL: publicAssetServer.url,
+        HEALTH_CHECK_TOKEN: '',
+      });
+      assert.equal(result.code, 0);
+      assert.equal(headers()['x-health-token'], undefined);
     });
   } finally {
     await publicPageServer.stop();

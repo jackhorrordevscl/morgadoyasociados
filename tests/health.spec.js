@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const http = require('node:http');
 const net = require('node:net');
@@ -32,6 +33,17 @@ function createTestWebRoot(tempRoot, name) {
   return destination;
 }
 
+function useFixtureRateLimitDirectory(documentRoot) {
+  const endpoint = path.join(documentRoot, 'rate-limiter.php');
+  const source = fs.readFileSync(endpoint, 'utf8');
+  const updated = source.replace(
+    "$dir = sys_get_temp_dir() . '/' . $namespace;",
+    "$dir = __DIR__ . '/' . $namespace;",
+  );
+  assert.notEqual(updated, source, 'The fixture must redirect rate-limit storage.');
+  fs.writeFileSync(endpoint, updated);
+}
+
 function writeValidConfig(documentRoot) {
   fs.writeFileSync(path.join(documentRoot, 'mail-config.php'), `<?php
 return [
@@ -46,7 +58,7 @@ return [
 `);
 }
 
-async function startPhpServer(documentRoot, extraArgs = []) {
+async function startPhpServer(documentRoot, extraArgs = [], env = {}) {
   const maxAttempts = 5;
   let lastError;
 
@@ -54,6 +66,10 @@ async function startPhpServer(documentRoot, extraArgs = []) {
     const port = await reservePort();
     const child = spawn(phpBinary, [...extraArgs, '-d', 'display_errors=0', '-S', `127.0.0.1:${port}`, '-t', documentRoot], {
       stdio: ['ignore', 'pipe', 'pipe'],
+      // HEALTH_CHECK_TOKEN is forced empty by default so the token-gated
+      // behavior stays deterministic regardless of the host shell's env;
+      // scenarios that need it override it explicitly.
+      env: { ...process.env, HEALTH_CHECK_TOKEN: '', ...env },
     });
     let startupOutput = '';
 
@@ -102,9 +118,9 @@ async function startPhpServer(documentRoot, extraArgs = []) {
   throw lastError;
 }
 
-function request(baseUrl, method) {
+function request(baseUrl, method, headers = {}) {
   return new Promise((resolve, reject) => {
-    const client = http.request(`${baseUrl}/health.php`, { method }, (response) => {
+    const client = http.request(`${baseUrl}/health.php`, { method, headers }, (response) => {
       let body = '';
       response.setEncoding('utf8');
       response.on('data', (chunk) => { body += chunk; });
@@ -175,6 +191,76 @@ async function run() {
     assert.equal(noExtensionsHeadResponse.body, '');
     assert.equal(noExtensionsHeadResponse.headers['content-length'], unavailablePayloadLength);
     await noExtensionsServer.stop();
+
+    const rateLimitedRoot = createTestWebRoot(tempRoot, 'rate-limited');
+    writeValidConfig(rateLimitedRoot);
+    useFixtureRateLimitDirectory(rateLimitedRoot);
+    const rateLimitedServer = await startPhpServer(rateLimitedRoot);
+    try {
+      let lastResponse;
+      for (let i = 0; i < 31; i += 1) {
+        lastResponse = await request(rateLimitedServer.baseUrl, 'GET');
+      }
+      assert.equal(lastResponse.status, 503);
+      assert.equal(lastResponse.body, '{"status":"unavailable"}');
+    } finally {
+      await rateLimitedServer.stop();
+    }
+
+    const rateLimitStorageFailureRoot = createTestWebRoot(tempRoot, 'rate-limit-storage-failure');
+    writeValidConfig(rateLimitStorageFailureRoot);
+    useFixtureRateLimitDirectory(rateLimitStorageFailureRoot);
+    fs.writeFileSync(path.join(rateLimitStorageFailureRoot, 'morgado-health-ratelimit'), 'blocked');
+    const rateLimitStorageFailureServer = await startPhpServer(rateLimitStorageFailureRoot);
+    try {
+      const response = await request(rateLimitStorageFailureServer.baseUrl, 'GET');
+      assert.equal(response.status, 503);
+      assert.equal(response.body, '{"status":"unavailable"}');
+      const headResponse = await request(rateLimitStorageFailureServer.baseUrl, 'HEAD');
+      assert.equal(headResponse.status, 503);
+      assert.equal(headResponse.body, '');
+    } finally {
+      await rateLimitStorageFailureServer.stop();
+    }
+
+    const tokenRoot = createTestWebRoot(tempRoot, 'token-protected');
+    writeValidConfig(tokenRoot);
+    useFixtureRateLimitDirectory(tokenRoot);
+    const tokenServer = await startPhpServer(tokenRoot, [], { HEALTH_CHECK_TOKEN: 'a-shared-secret' });
+    try {
+      const missingTokenResponse = await request(tokenServer.baseUrl, 'GET');
+      assert.equal(missingTokenResponse.status, 404);
+      assert.equal(missingTokenResponse.body, '');
+
+      const wrongTokenResponse = await request(tokenServer.baseUrl, 'GET', { 'X-Health-Token': 'wrong-secret' });
+      assert.equal(wrongTokenResponse.status, 404);
+      assert.equal(wrongTokenResponse.body, '');
+
+      const correctTokenResponse = await request(tokenServer.baseUrl, 'GET', { 'X-Health-Token': 'a-shared-secret' });
+      assert.equal(correctTokenResponse.status, 200);
+      assert.equal(correctTokenResponse.body, '{"status":"ok"}');
+
+      const correctTokenHeadResponse = await request(tokenServer.baseUrl, 'HEAD', { 'X-Health-Token': 'a-shared-secret' });
+      assert.equal(correctTokenHeadResponse.status, 200);
+      assert.equal(correctTokenHeadResponse.body, '');
+    } finally {
+      await tokenServer.stop();
+    }
+
+    // No HEALTH_CHECK_TOKEN in the environment: the endpoint stays open (still
+    // rate-limited), matching every scenario above where startPhpServer's
+    // default env forces HEALTH_CHECK_TOKEN to '' (unset-equivalent).
+    const noTokenRoot = createTestWebRoot(tempRoot, 'no-token-configured');
+    writeValidConfig(noTokenRoot);
+    useFixtureRateLimitDirectory(noTokenRoot);
+    const noTokenServer = await startPhpServer(noTokenRoot);
+    try {
+      const response = await request(noTokenServer.baseUrl, 'GET');
+      assert.equal(response.status, 200);
+      assert.equal(response.body, '{"status":"ok"}');
+    } finally {
+      await noTokenServer.stop();
+    }
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }

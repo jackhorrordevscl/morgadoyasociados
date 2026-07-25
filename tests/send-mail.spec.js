@@ -46,11 +46,11 @@ return [
 }
 
 function useFixtureRateLimitDirectory(documentRoot) {
-  const endpoint = path.join(documentRoot, 'send-mail.php');
+  const endpoint = path.join(documentRoot, 'rate-limiter.php');
   const source = fs.readFileSync(endpoint, 'utf8');
   const updated = source.replace(
-    "$dir = sys_get_temp_dir() . '/morgado-contact-ratelimit';",
-    "$dir = __DIR__ . '/morgado-contact-ratelimit';",
+    "$dir = sys_get_temp_dir() . '/' . $namespace;",
+    "$dir = __DIR__ . '/' . $namespace;",
   );
   assert.notEqual(updated, source, 'The fixture must redirect rate-limit storage.');
   fs.writeFileSync(endpoint, updated);
