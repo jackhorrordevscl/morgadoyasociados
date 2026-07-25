@@ -4,6 +4,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { pages } = require('../src/data/pages');
 const pageLayout = require('../src/layouts/page');
+const practiceAreaIntro = require('../src/partials/practice-area');
 
 const root = path.resolve(__dirname, '..');
 const webRoot = path.join(root, 'web');
@@ -109,6 +110,9 @@ for (const page of pages) {
     throw new Error(`Missing ${path.relative(root, source)}. Run: node scripts/build-pages.js --extract-existing`);
   }
   const fragment = JSON.parse(fs.readFileSync(source, 'utf8'));
+  if (fragment.practiceArea && typeof fragment.middleContent === 'string') {
+    fragment.pageContentBetweenShell = `\n\n  <main class="relative">\n    ${practiceAreaIntro(fragment.practiceArea)}\n\n    ${fragment.middleContent}\n  </main>\n`;
+  }
   for (const field of ['shellOpenBeforeHeader', 'pageContentBetweenShell', 'shellCloseAfterFooter']) {
     if (typeof fragment[field] !== 'string') throw new Error(`Invalid ${path.relative(root, source)}: missing ${field}`);
   }
