@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/mail-config-loader.php';
+require_once __DIR__ . '/rate-limiter.php';
 
 const HEALTH_PAYLOAD = '{"status":"ok"}';
 const HEALTH_UNAVAILABLE_PAYLOAD = '{"status":"unavailable"}';
@@ -37,6 +38,23 @@ function requiredExtensionsAvailable(): bool
     return true;
 }
 
+/**
+ * Si HEALTH_CHECK_TOKEN está definida en el entorno, exige un encabezado
+ * X-Health-Token que la iguale (comparación segura ante timing attacks). Si
+ * no está definida, el endpoint sigue abierto como antes.
+ */
+function healthTokenIsValid(): bool
+{
+    $expected = getenv('HEALTH_CHECK_TOKEN');
+    if ($expected === false || $expected === '') {
+        return true;
+    }
+
+    $provided = $_SERVER['HTTP_X_HEALTH_TOKEN'] ?? '';
+
+    return is_string($provided) && $provided !== '' && hash_equals($expected, $provided);
+}
+
 function respond(int $status, string $payload, string $method): void
 {
     http_response_code($status);
@@ -45,6 +63,29 @@ function respond(int $status, string $payload, string $method): void
         echo $payload;
     }
     exit;
+}
+
+// Un token ausente o incorrecto responde 404, no 401/403, para no confirmar
+// la existencia del endpoint a quienes no lo conocen.
+if (!healthTokenIsValid()) {
+    http_response_code(404);
+    header('Content-Length: 0');
+    exit;
+}
+
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+$rateLimitResult = checkRateLimit(
+    $clientIp,
+    maxRequests: 30,
+    windowSeconds: 300,
+    minSecondsBetween: 0,
+    namespace: 'morgado-health-ratelimit',
+);
+if ($rateLimitResult === null || $rateLimitResult === false) {
+    // No se distingue entre fallo de almacenamiento y límite alcanzado: el
+    // mismo payload de "unavailable" evita dar una señal nueva a quien sondea.
+    logHealthEvent('rate_limit_unavailable');
+    respond(503, HEALTH_UNAVAILABLE_PAYLOAD, $method);
 }
 
 if (!requiredExtensionsAvailable()) {

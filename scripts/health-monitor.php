@@ -35,6 +35,13 @@ function configuredUrl(string $environmentVariable, string $default): string
     return is_string($url) && $url !== '' ? $url : $default;
 }
 
+function healthCheckToken(): ?string
+{
+    $token = getenv('HEALTH_CHECK_TOKEN');
+
+    return is_string($token) && $token !== '' ? $token : null;
+}
+
 function isSupportedUrl(string $url): bool
 {
     $parts = parse_url($url);
@@ -58,8 +65,13 @@ function responseStatus(array $headers): ?int
     return $status;
 }
 
-function request(string $url, string $accept): array
+function request(string $url, string $accept, array $extraHeaders = []): array
 {
+    $headerLines = array_merge(
+        ["Accept: {$accept}", 'Connection: close', 'User-Agent: MorgadoHealthMonitor/1.1'],
+        $extraHeaders
+    );
+
     $context = stream_context_create([
         'http' => [
             'method' => 'GET',
@@ -68,7 +80,7 @@ function request(string $url, string $accept): array
             'follow_location' => 0,
             'max_redirects' => 0,
             'protocol_version' => 1.1,
-            'header' => "Accept: {$accept}\r\nConnection: close\r\nUser-Agent: MorgadoHealthMonitor/1.1\r\n",
+            'header' => implode("\r\n", $headerLines) . "\r\n",
         ],
         'ssl' => [
             'verify_peer' => true,
@@ -82,13 +94,13 @@ function request(string $url, string $accept): array
     return [$body, responseStatus($http_response_header)];
 }
 
-function assertHttpOk(string $name, string $url, string $accept): string
+function assertHttpOk(string $name, string $url, string $accept, array $extraHeaders = []): string
 {
     if (!isSupportedUrl($url)) {
         fail("invalid {$name} URL");
     }
 
-    [$body, $status] = request($url, $accept);
+    [$body, $status] = request($url, $accept, $extraHeaders);
     if ($body === false || $status === null) {
         fail("{$name} request unavailable");
     }
@@ -103,7 +115,14 @@ if (executionSapi() !== 'cli') {
     fail('CLI execution required');
 }
 
-$healthBody = assertHttpOk('health', configuredUrl('HEALTH_MONITOR_URL', HEALTH_MONITOR_URL), 'application/json');
+$healthToken = healthCheckToken();
+$healthHeaders = $healthToken !== null ? ["X-Health-Token: {$healthToken}"] : [];
+$healthBody = assertHttpOk(
+    'health',
+    configuredUrl('HEALTH_MONITOR_URL', HEALTH_MONITOR_URL),
+    'application/json',
+    $healthHeaders
+);
 if ($healthBody !== HEALTH_MONITOR_PAYLOAD) {
     fail('unexpected response payload');
 }

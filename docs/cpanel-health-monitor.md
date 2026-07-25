@@ -22,6 +22,22 @@ Upload `scripts/health-monitor.php` **outside** `public_html` (for example, to `
    /usr/local/bin/php <CPANEL_HOME>/scripts/health-monitor.php
    ```
 
+## Optional shared token
+
+`web/health.php` is rate-limited but otherwise public by default. To also require a shared secret, set `HEALTH_CHECK_TOKEN` in both the web server's environment (so `health.php` can read it) and the cron job's environment (so `health-monitor.php` sends it):
+
+```sh
+HEALTH_CHECK_TOKEN=<SHARED_SECRET> <PHP_BINARY> <CPANEL_HOME>/scripts/health-monitor.php
+```
+
+When `HEALTH_CHECK_TOKEN` is set, `health.php` requires a matching `X-Health-Token` header and responds `404` to any request missing it or sending the wrong value, so the endpoint's existence isn't confirmed to unauthenticated probes. If the variable is left unset anywhere, `health.php` stays open (still rate-limited) — this is a deliberate default so existing deployments and local/dev usage keep working without extra setup.
+
+When triaging manually with `curl`, include the header if a token is configured:
+
+```sh
+curl --fail --silent --show-error --max-time 10 -H "X-Health-Token: <TOKEN>" https://morgadoyasociados.cl/health.php
+```
+
 ## Expected behavior
 
 | Result | Cron behavior |
