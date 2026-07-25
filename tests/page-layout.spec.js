@@ -25,8 +25,8 @@ const navHrefs = {
   contact: 'contact.html',
 };
 const animationScripts = [
-  'https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js',
-  'https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js',
+  'https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js',
+  'https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js',
   'assets/animations.js',
 ];
 const animatedPageFilenames = ['index.html', 'about.html', 'services.html', 'results.html', 'blog.html', 'contact.html', 'legal.html'];

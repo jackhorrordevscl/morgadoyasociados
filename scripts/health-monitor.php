@@ -9,6 +9,7 @@ const PUBLIC_PAGE_EXPECTED_MARKER = '<body data-page="home">';
 const PUBLIC_ASSET_MONITOR_URL = 'https://morgadoyasociados.cl/assets/site.css';
 const HEALTH_MONITOR_TIMEOUT_SECONDS = 10;
 const HEALTH_MONITOR_MAX_RESPONSE_BYTES = 16384;
+const HEALTH_MONITOR_ALLOWED_HOSTS = ['morgadoyasociados.cl'];
 
 function executionSapi(): string
 {
@@ -42,6 +43,19 @@ function healthCheckToken(): ?string
     return is_string($token) && $token !== '' ? $token : null;
 }
 
+function allowedHosts(): array
+{
+    return defined('HEALTH_MONITOR_TEST_ALLOWED_HOSTS')
+        ? HEALTH_MONITOR_TEST_ALLOWED_HOSTS
+        : HEALTH_MONITOR_ALLOWED_HOSTS;
+}
+
+/**
+ * Restringe las URLs monitoreadas al propio dominio: HEALTH_MONITOR_URL,
+ * PUBLIC_PAGE_MONITOR_URL y PUBLIC_ASSET_MONITOR_URL son override-ables por
+ * env vars, así que sin esta whitelist un env var no confiable podría usar
+ * el cron para golpear cualquier URL arbitraria (SSRF).
+ */
 function isSupportedUrl(string $url): bool
 {
     $parts = parse_url($url);
@@ -49,7 +63,8 @@ function isSupportedUrl(string $url): bool
     return is_array($parts)
         && isset($parts['scheme'], $parts['host'])
         && in_array($parts['scheme'], ['http', 'https'], true)
-        && $parts['host'] !== '';
+        && $parts['host'] !== ''
+        && in_array(strtolower($parts['host']), array_map('strtolower', allowedHosts()), true);
 }
 
 function responseStatus(array $headers): ?int
