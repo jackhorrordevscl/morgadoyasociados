@@ -1,6 +1,11 @@
 npm run build:pages
 
-if ! git diff --exit-code --quiet -- web/; then
+# sitemap.xml's <lastmod> is excluded: it's derived from `git log`, whose
+# result depends on which commit is checked out (e.g. GitHub's synthetic
+# PR merge commit), so it can legitimately differ between a local build
+# and CI/another machine even with no manual edit. Its <loc> entries are
+# still covered by tests/seo.spec.js.
+if ! git diff --exit-code --quiet -- web/ ':(exclude)web/sitemap.xml'; then
   echo ""
   echo "ERROR: web/*.html is out of sync with src/ (npm run build:pages changed files)."
   echo "This usually means web/ was edited by hand instead of through src/pages, src/partials, or src/data/site.js."
