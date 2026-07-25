@@ -34,4 +34,9 @@ jobs:
               ! -path 'web/mail-config.php' -print0
           )
       - name: Check generated output
-        run: git diff --exit-code -- web/
+        # sitemap.xml's <lastmod> is excluded: it's derived from `git log`,
+        # whose result depends on which commit is checked out (e.g. GitHub's
+        # synthetic PR merge commit), so it can legitimately differ from a
+        # local build even with no manual edit. Its <loc> entries are still
+        # covered by tests/seo.spec.js.
+        run: git diff --exit-code -- web/ ':(exclude)web/sitemap.xml'
