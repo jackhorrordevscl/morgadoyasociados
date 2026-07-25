@@ -47,7 +47,33 @@ function writeSources() {
   }
 }
 
+let shallowRepoChecked = false;
+let repoIsShallow = false;
+
+function checkShallowRepo() {
+  if (shallowRepoChecked) return;
+  shallowRepoChecked = true;
+  try {
+    const output = execFileSync(
+      'git',
+      ['rev-parse', '--is-shallow-repository'],
+      { cwd: root, encoding: 'utf8' },
+    ).trim();
+    repoIsShallow = output === 'true';
+  } catch (error) {
+    // Not a git repository (e.g. a deployed tarball with no .git) — nothing to check.
+  }
+}
+
 function lastCommitDateFor(absolutePath) {
+  checkShallowRepo();
+  if (repoIsShallow) {
+    throw new Error(
+      `Cannot compute a deterministic sitemap <lastmod> from a shallow git clone ` +
+        `(missing history for ${path.relative(root, absolutePath)}).\n` +
+        'Run "git fetch --unshallow" and re-run the build.',
+    );
+  }
   try {
     const output = execFileSync(
       'git',
@@ -56,8 +82,8 @@ function lastCommitDateFor(absolutePath) {
     ).trim();
     if (output) return output;
   } catch (error) {
-    // Fall through to the build-time fallback below (e.g. git unavailable,
-    // shallow clone missing history, or the file has no commits yet).
+    // Not a git repository or git unavailable — fall through to the
+    // build-time fallback below.
   }
   return new Date().toISOString();
 }
