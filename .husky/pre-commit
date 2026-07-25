@@ -1,0 +1,15 @@
+npm run build:pages
+
+if ! git diff --exit-code --quiet -- web/; then
+  echo ""
+  echo "ERROR: web/*.html is out of sync with src/ (npm run build:pages changed files)."
+  echo "This usually means web/ was edited by hand instead of through src/pages, src/partials, or src/data/site.js."
+  echo ""
+  echo "Fix:"
+  echo "  1. Review the diff: git diff -- web/"
+  echo "  2. If the change should come from source, edit src/ instead and re-run: npm run build:pages"
+  echo "  3. Stage the regenerated web/ files: git add web/"
+  echo "  4. Commit again."
+  echo ""
+  exit 1
+fi
