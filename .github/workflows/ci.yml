@@ -24,6 +24,18 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run site checks
         run: npm test
+      - name: Ensure Chrome is available for Lighthouse CI
+        # GitHub-hosted ubuntu-latest runners ship with google-chrome-stable
+        # preinstalled, which chrome-launcher (used by @lhci/cli) auto-detects.
+        # This step is a safety net in case that ever changes, without adding
+        # a puppeteer dependency just to fetch a browser Chrome already has.
+        run: |
+          if ! command -v google-chrome-stable >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y google-chrome-stable
+          fi
+      - name: Run Lighthouse CI
+        run: npm run test:lighthouse
       - name: Check PHP syntax
         run: |
           while IFS= read -r -d '' file; do
