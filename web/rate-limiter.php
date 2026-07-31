@@ -11,6 +11,34 @@ declare(strict_types=1);
  * ejemplo, el formulario de contacto y el endpoint de salud) para que no
  * compartan el mismo contador.
  */
+/**
+ * Opportunistically deletes rate-limit files whose contents can only be
+ * stale: if a file hasn't been written in $windowSeconds, every timestamp
+ * inside it has already aged out of the window on the next read anyway.
+ * Runs on a small fraction of requests so it doesn't add I/O to every call
+ * under normal traffic, since nothing else prunes this directory.
+ */
+function pruneStaleRateLimitFiles(string $dir, int $windowSeconds): void
+{
+    $entries = @scandir($dir);
+    if ($entries === false) {
+        return;
+    }
+
+    $cutoff = time() - $windowSeconds;
+    foreach ($entries as $entry) {
+        if ($entry === '.' || $entry === '..' || !str_ends_with($entry, '.json')) {
+            continue;
+        }
+
+        $path = $dir . '/' . $entry;
+        $mtime = @filemtime($path);
+        if ($mtime !== false && $mtime < $cutoff) {
+            @unlink($path);
+        }
+    }
+}
+
 function checkRateLimit(
     string $ip,
     int $maxRequests,
@@ -21,6 +49,10 @@ function checkRateLimit(
     $dir = sys_get_temp_dir() . '/' . $namespace;
     if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
         return null;
+    }
+
+    if (random_int(1, 100) === 1) {
+        pruneStaleRateLimitFiles($dir, $windowSeconds);
     }
 
     $file = $dir . '/' . hash('sha256', $ip) . '.json';
