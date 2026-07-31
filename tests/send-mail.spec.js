@@ -531,6 +531,40 @@ return [
     } finally {
       await rateLimitSmtp.stop();
     }
+
+    const floodSmtp = await startSuccessfulSmtpServer();
+    try {
+      const floodRoot = createTestWebRoot(tempRoot, 'rate-limit-flood-gate');
+      writeMailConfig(floodRoot, floodSmtp.port, 'none');
+      useFixtureRateLimitDirectory(floodRoot);
+
+      // Seed a single timestamp 5s ago: far below the maxRequests: 5 count
+      // limit, but inside the minSecondsBetween: 15 anti-flood window. The
+      // next real request must be rejected purely by that gate, not by the
+      // count-based one exercised above.
+      const recentNow = Math.floor(Date.now() / 1000);
+      writeFixtureRateLimitState(floodRoot, JSON.stringify({ timestamps: [recentNow - 5] }));
+
+      const floodServer = await startPhpServer(floodRoot);
+      try {
+        const floodResponse = await post(floodServer.baseUrl, validFields);
+        assert.equal(floodResponse.status, 429, 'A request within minSecondsBetween must be rejected by the anti-flood gate.');
+        assert.deepEqual(JSON.parse(floodResponse.raw), {
+          success: false,
+          message: 'Ha enviado demasiadas solicitudes. Por favor intente nuevamente en unos minutos.',
+        });
+
+        assert.equal(
+          floodSmtp.connections(),
+          0,
+          'A request rejected by the anti-flood gate must never reach the SMTP server.',
+        );
+      } finally {
+        await floodServer.stop();
+      }
+    } finally {
+      await floodSmtp.stop();
+    }
   } finally {
     clearRateLimit();
     await normalServer.stop();
