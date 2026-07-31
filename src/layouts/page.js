@@ -116,12 +116,6 @@ const responsiveImageSettings = {
       widths: [480, 768, 1000, 1440],
     },
   },
-  about: {
-    'https://images.unsplash.com/photo-1518556336318-c8de4355ccab?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
-    'https://images.unsplash.com/photo-1585240975735-4826abe53080?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
-    'https://images.unsplash.com/photo-1645990543673-53d612fee13e?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
-    'https://images.unsplash.com/photo-1612283061725-f22721e5a3cd?auto=format&w=400&q=80&fit=crop': { sizes: '176px', widths: [176, 352] },
-  },
 };
 
 function renderResponsiveImages(content, slug) {
