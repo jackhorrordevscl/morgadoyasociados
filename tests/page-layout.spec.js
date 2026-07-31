@@ -154,7 +154,12 @@ const about = fs.readFileSync(path.join(webRoot, 'about.html'), 'utf8');
 assert.strictEqual((about.match(/alt="Foto próximamente"/g) || []).length, 4, 'The team grid shows four placeholder portraits');
 assert.strictEqual((about.match(/src="img\/silueta-hombre\.webp"/g) || []).length, 2, 'Two team placeholders use the male silhouette');
 assert.strictEqual((about.match(/src="img\/silueta-mujer\.webp"/g) || []).length, 2, 'Two team placeholders use the female silhouette');
-assert.strictEqual((about.match(/>Próximamente</g) || []).length, 13, 'Team name, role, bio, and the quote attribution are all placeholders');
+assert.strictEqual((about.match(/>Próximamente</g) || []).length, 5, 'Team name (x4) and the quote attribution are placeholders');
+assert.strictEqual(
+  (about.match(/>Estamos completando el perfil de este integrante del equipo\.</g) || []).length,
+  4,
+  'Team bios explain the placeholder instead of repeating "Próximamente"',
+);
 
 const servicePage = pages.find((page) => page.filename === 'services.html');
 const serviceCardMarkup = pageLayout(servicePage, {
