@@ -55,7 +55,11 @@ function renderServiceCards(content, serviceLinks) {
 
   while (cardStart >= 0) {
     const cardEnd = findMatchingDiv(rendered, cardStart);
-    if (cardEnd < 0) return rendered;
+    if (cardEnd < 0) {
+      throw new Error(
+        `renderServiceCards: unbalanced <div> in service card starting at offset ${cardStart}: ${rendered.slice(cardStart, cardStart + 120)}...`,
+      );
+    }
 
     const card = rendered.slice(cardStart, cardEnd);
     const href = serviceLinks[cardLabel(card)];
