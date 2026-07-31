@@ -40,6 +40,19 @@ function loadMailConfig(): ?array
     return $config === [] ? null : $config;
 }
 
+// Placeholder values from mail-config.example.php. An operator who copies
+// that file to mail-config.php and forgets to edit it would otherwise pass
+// hasValidMailConfig() (the values have the right shape) and only find out
+// when send-mail.php fails to connect to smtp.example.com at request time,
+// with health.php reporting "ok" the whole time.
+const MAIL_CONFIG_PLACEHOLDER_VALUES = [
+    'smtp_host' => 'smtp.example.com',
+    'smtp_user' => 'your-smtp-username',
+    'smtp_pass' => 'CHANGE_ME',
+    'to_email' => 'recipient@example.com',
+    'to_name' => 'Example Recipient',
+];
+
 function hasValidMailConfig(mixed $config): bool
 {
     if (!is_array($config)) {
@@ -48,6 +61,10 @@ function hasValidMailConfig(mixed $config): bool
 
     foreach (['smtp_host', 'smtp_user', 'smtp_pass', 'smtp_secure', 'to_email', 'to_name'] as $key) {
         if (!isset($config[$key]) || !is_string($config[$key]) || $config[$key] === '') {
+            return false;
+        }
+
+        if (isset(MAIL_CONFIG_PLACEHOLDER_VALUES[$key]) && $config[$key] === MAIL_CONFIG_PLACEHOLDER_VALUES[$key]) {
             return false;
         }
     }
