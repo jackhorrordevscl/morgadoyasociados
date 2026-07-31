@@ -42,7 +42,7 @@ for (const page of pages) {
     assert.ok(graphTypes.includes('LocalBusiness'));
     for (const entry of structuredData['@graph']) {
       assert.equal(entry.name, 'Asesoría Legal Morgado, Cía. & Asociados');
-      assert.match(entry.url, /^https:\/\/morgadoyasociados\.cl\/(?:contact\.html)?$/);
+      assert.equal(entry.url, page.canonical);
       assert.equal(entry.telephone, '+56 2 2638 1456');
       assert.equal(entry.email, 'contacto@morgadoyasociados.cl');
       assert.equal(entry.areaServed, 'Chile');
