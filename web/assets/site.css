@@ -4,12 +4,18 @@ html, body { margin: 0; padding: 0; }
   --rose-dark: #8C4B5C;
   --rose-main: #B37280;
   --rose-light: #D9A5AE;
-  --beige-dark: #A68A6D;
+  /* Darkened from #A68A6D (2.79:1 on --beige-light) to 4.62:1 on --beige-light
+     / 3.88:1 on --beige-main (only ever used as text on --beige-light in
+     practice). --beige-dark's one background use (a decorative divider) is
+     unaffected — only its lightness changes slightly. */
+  --beige-dark: #7C6752;
   --beige-main: #E8D9C8;
   --beige-light: #F5EDE4;
   --white: #FFFFFF;
   --charcoal: #3A3235;
-  --gray-text: #6E6265;
+  /* Darkened from #6E6265 (4.22:1 on --beige-main, just under the 4.5:1
+     minimum) to 4.55:1. Only used as body text on light backgrounds. */
+  --gray-text: #695D60;
   /* Darkened from #B5713D (3.35:1 on --beige-light, failing WCAG AA for the
      11px eyebrow labels) to 4.58:1 on --beige-main / 5.46:1 on --beige-light. */
   --copper: #86542D;
@@ -21,6 +27,10 @@ html, body { margin: 0; padding: 0; }
      both --charcoal (8.85:1) and --rose-dark (4.56:1). */
   --copper-on-dark: #EAD6C7;
   --beige-dark-on-dark: #B1987F;
+  /* Same value as .rose-light-on-dark below, as a custom property for the
+     handful of spots (services.json) that set color via inline style="
+     instead of a Tailwind arbitrary-value class. */
+  --rose-light-on-dark: #F0D5DA;
 }
 
 .font-serif { font-family: 'Playfair Display', serif; }
@@ -36,6 +46,19 @@ html, body { margin: 0; padding: 0; }
    small footer tagline instead of changing --rose-light globally, since that
    variable is also used at larger sizes and on other backgrounds elsewhere. */
 .footer-tagline { color: #F0D5DA; }
+
+/* Same --rose-light-on-rose-dark contrast problem as .footer-tagline above,
+   for the small CTA eyebrows/paragraphs reused across most pages. Scoped
+   instead of changing --rose-light globally, since large decorative numbers
+   and icons already pass at 3:1 (the large-text threshold) with the
+   original shade and would look inconsistently dark if lightened further. */
+.rose-light-on-dark { color: #F0D5DA; }
+
+/* --rose-light used as small/medium-size decorative numbers on light
+   (--beige-light/--beige-main) backgrounds in a few pages' "process" steps:
+   1.5-1.8:1, failing even the 3:1 large-text minimum. Scoped darker variant
+   for that specific light-background reading. */
+.rose-light-strong { color: #75595E; }
 
 .skip-link {
   position: fixed;
