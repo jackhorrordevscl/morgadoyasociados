@@ -10,7 +10,17 @@ html, body { margin: 0; padding: 0; }
   --white: #FFFFFF;
   --charcoal: #3A3235;
   --gray-text: #6E6265;
-  --copper: #B5713D;
+  /* Darkened from #B5713D (3.35:1 on --beige-light, failing WCAG AA for the
+     11px eyebrow labels) to 4.58:1 on --beige-main / 5.46:1 on --beige-light. */
+  --copper: #86542D;
+  /* --copper/--beige-dark are tuned for light backgrounds above. Dark cards/
+     sections (contact.html's #3A3235 info card, the rose-dark CTA blocks on
+     civil/penal/inmobiliaria) need lighter tones to hit 4.5:1 against those
+     backgrounds instead — scoped to those spots only, since the tones above
+     would fail there and these would fail on light pages. One shade covers
+     both --charcoal (8.85:1) and --rose-dark (4.56:1). */
+  --copper-on-dark: #EAD6C7;
+  --beige-dark-on-dark: #B1987F;
 }
 
 .font-serif { font-family: 'Playfair Display', serif; }
