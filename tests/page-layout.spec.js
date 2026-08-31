@@ -151,15 +151,10 @@ const home = fs.readFileSync(path.join(webRoot, 'index.html'), 'utf8');
 assert.match(home, /srcset="https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=480&q=80&fit=crop 480w, https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=768&q=80&fit=crop 768w, https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=1000&q=80&fit=crop 1000w, https:\/\/images\.unsplash\.com\/photo-1627518788331-b3b7fdaa382f\?auto=format&w=1440&q=80&fit=crop 1440w" sizes="\(min-width: 1440px\) 684px, \(min-width: 1024px\) 47\.5vw, 100vw"/, 'The hero has responsive image candidates');
 
 const about = fs.readFileSync(path.join(webRoot, 'about.html'), 'utf8');
-assert.strictEqual((about.match(/alt="Foto próximamente"/g) || []).length, 4, 'The team grid shows four placeholder portraits');
-assert.strictEqual((about.match(/src="img\/silueta-hombre\.webp"/g) || []).length, 2, 'Two team placeholders use the male silhouette');
-assert.strictEqual((about.match(/src="img\/silueta-mujer\.webp"/g) || []).length, 2, 'Two team placeholders use the female silhouette');
-assert.strictEqual((about.match(/>Próximamente</g) || []).length, 5, 'Team name (x4) and the quote attribution are placeholders');
-assert.strictEqual(
-  (about.match(/>Estamos completando el perfil de este integrante del equipo\.</g) || []).length,
-  4,
-  'Team bios explain the placeholder instead of repeating "Próximamente"',
-);
+assert.doesNotMatch(about, /class="hidden bg-\(--white\)/, 'The team section is published, not hidden');
+assert.strictEqual((about.match(/src="img\/alfredo-morgado\.jpg"/g) || []).length, 1, 'Alfredo Morgado has a real portrait');
+assert.strictEqual((about.match(/src="img\/pia-unda-izamit\.jpg"/g) || []).length, 1, 'Pía Unda Isamit has a real portrait');
+assert.strictEqual((about.match(/>Próximamente</g) || []).length, 1, 'Only the quote attribution remains a placeholder');
 
 const servicePage = pages.find((page) => page.filename === 'services.html');
 const serviceCardMarkup = pageLayout(servicePage, {
