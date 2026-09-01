@@ -154,7 +154,7 @@ const about = fs.readFileSync(path.join(webRoot, 'about.html'), 'utf8');
 assert.doesNotMatch(about, /class="hidden bg-\(--white\)/, 'The team section is published, not hidden');
 assert.strictEqual((about.match(/src="img\/alfredo-morgado\.jpg"/g) || []).length, 1, 'Alfredo Morgado has a real portrait');
 assert.strictEqual((about.match(/src="img\/pia-unda-izamit\.jpg"/g) || []).length, 1, 'Pía Unda Isamit has a real portrait');
-assert.strictEqual((about.match(/>Próximamente</g) || []).length, 1, 'Only the quote attribution remains a placeholder');
+assert.strictEqual((about.match(/>Próximamente</g) || []).length, 0, 'No placeholder text remains on the about page');
 
 const servicePage = pages.find((page) => page.filename === 'services.html');
 const serviceCardMarkup = pageLayout(servicePage, {
