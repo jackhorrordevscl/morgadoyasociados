@@ -112,6 +112,7 @@ for (const page of pages) {
   const fragment = JSON.parse(fs.readFileSync(source, 'utf8'));
   if (fragment.practiceArea && typeof fragment.middleContent === 'string') {
     fragment.pageContentBetweenShell = `\n\n  <main class="relative">\n    ${practiceAreaIntro(fragment.practiceArea)}\n\n    ${fragment.middleContent}\n  </main>\n`;
+    page.breadcrumbLabel = fragment.practiceArea.breadcrumbLabel;
   }
   for (const field of ['shellOpenBeforeHeader', 'pageContentBetweenShell', 'shellCloseAfterFooter']) {
     if (typeof fragment[field] !== 'string') throw new Error(`Invalid ${path.relative(root, source)}: missing ${field}`);

@@ -48,6 +48,7 @@ function organizationJsonLd(canonical, type, id) {
     email: site.email,
     address: site.address,
     image: `${site.baseUrl}/${site.brandMark}`,
+    logo: `${site.baseUrl}/${site.brandMark}`,
     areaServed: 'Chile',
     openingHours: 'Mo-Fr 09:00-18:00',
   };
@@ -70,7 +71,19 @@ function serviceJsonLd(canonical, serviceType, description) {
       email: site.email,
       address: site.address,
       image: `${site.baseUrl}/${site.brandMark}`,
+      logo: `${site.baseUrl}/${site.brandMark}`,
     },
+  };
+}
+
+function breadcrumbJsonLd(canonical, label) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Servicios', item: `${site.baseUrl}/services.html` },
+      { '@type': 'ListItem', position: 2, name: label, item: canonical },
+    ],
   };
 }
 
@@ -82,4 +95,4 @@ function escapeHtmlAttribute(value) {
     .replace(/>/g, '&gt;');
 }
 
-module.exports = { site, titleFor, canonicalFor, organizationJsonLd, serviceJsonLd, escapeHtmlAttribute };
+module.exports = { site, titleFor, canonicalFor, organizationJsonLd, serviceJsonLd, breadcrumbJsonLd, escapeHtmlAttribute };
