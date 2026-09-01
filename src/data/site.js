@@ -30,8 +30,8 @@ const site = {
   socialImageAlt: 'Persona firmando un documento',
 };
 
-function titleFor(suffix) {
-  return `${site.brandLongText} | ${suffix}`;
+function titleFor(suffix, keywordFirst = false) {
+  return keywordFirst ? `${suffix} | ${site.brandLongText}` : `${site.brandLongText} | ${suffix}`;
 }
 
 function canonicalFor(filename) {

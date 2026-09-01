@@ -3,7 +3,7 @@ const { site, titleFor, canonicalFor } = require('./site');
 function definePage({ titleSuffix, robots = site.defaultRobots, sitemap = true, ...page }) {
   return {
     ...page,
-    title: titleFor(titleSuffix),
+    title: titleFor(titleSuffix, Boolean(page.practiceArea)),
     canonical: canonicalFor(page.filename),
     robots,
     sitemap,
