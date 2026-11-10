@@ -183,7 +183,7 @@ for (const [label, href] of Object.entries(servicePage.serviceLinks)) {
 
 for (const page of pages.filter((entry) => entry.activeNav === 'services' && entry.navAriaCurrent === false)) {
   const html = fs.readFileSync(path.join(webRoot, page.filename), 'utf8');
-  assert.match(html, /shadow-\[0_16px_34px_-16px_rgba\(140,75,92,0\.9\)\]/, `${page.filename} uses the aligned service CTA elevation`);
+  assert.match(html, /shadow-\[0_16px_34px_-16px_rgba\(179,27,85,0\.9\)\]/, `${page.filename} uses the aligned service CTA elevation`);
   assert.match(html, /<svg[^>]*stroke-width="2"[^>]*data-icon-role="action"/, `${page.filename} normalizes action icon strokes`);
 }
 
