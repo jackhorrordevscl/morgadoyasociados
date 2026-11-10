@@ -105,7 +105,7 @@ function renderServicePage(content, page) {
   if (page.activeNav !== 'services' || page.navAriaCurrent !== false) return content;
 
   return content.replace(/\bclass="([^"]*\bbtn-rose\b[^"]*)"/g, (match, classes) => {
-    return `class="${addClass(classes, 'shadow-[0_16px_34px_-16px_rgba(140,75,92,0.9)]')}"`;
+    return `class="${addClass(classes, 'shadow-[0_16px_34px_-16px_rgba(179,27,85,0.9)]')}"`;
   });
 }
 

@@ -1,9 +1,19 @@
 html, body { margin: 0; padding: 0; }
 
 :root {
-  --rose-dark: #8C4B5C;
-  --rose-main: #B37280;
-  --rose-light: #D9A5AE;
+  /* --rose-dark is the support tone used wherever white text sits on it or it
+     is used as text on light backgrounds: 6.55:1 with white, 5.65:1 on
+     --beige-light, 6.55:1 on white, 4.74:1 on --beige-main. White at 80%
+     opacity on it is 4.64:1 and --beige-main text on it is 4.74:1.
+     --rose-brand is the requested brand pink
+     (#F64A8A) and only 3.35:1 with white / 2.89:1 on --beige-light, so it is
+     reserved for decoration and large accents, never for text. */
+  --rose-dark: #B31B55;
+  --rose-brand: #F64A8A;
+  /* Hover/focus shade for .btn-rose: 8.97:1 with white. */
+  --rose-darker: #8F1245;
+  --rose-main: #F98DB2;
+  --rose-light: #FCC6D9;
   /* Darkened from #A68A6D (2.79:1 on --beige-light) to 4.62:1 on --beige-light
      / 3.88:1 on --beige-main (only ever used as text on --beige-light in
      practice). --beige-dark's one background use (a decorative divider) is
@@ -24,13 +34,13 @@ html, body { margin: 0; padding: 0; }
      civil/penal/inmobiliaria) need lighter tones to hit 4.5:1 against those
      backgrounds instead — scoped to those spots only, since the tones above
      would fail there and these would fail on light pages. One shade covers
-     both --charcoal (8.85:1) and --rose-dark (4.56:1). */
-  --copper-on-dark: #EAD6C7;
-  --beige-dark-on-dark: #B1987F;
+     both --charcoal (9.97:1) and --rose-dark #B31B55 (5.25:1). */
+  --copper-on-dark: #F2E4D4;
+  --beige-dark-on-dark: #F2E4D4;
   /* Same value as .rose-light-on-dark below, as a custom property for the
      handful of spots (services.json) that set color via inline style="
      instead of a Tailwind arbitrary-value class. */
-  --rose-light-on-dark: #F0D5DA;
+  --rose-light-on-dark: #FFE8F1;
 }
 
 .font-serif { font-family: 'Playfair Display', serif; }
@@ -41,18 +51,18 @@ html, body { margin: 0; padding: 0; }
 
 .lp-root { background-color: var(--beige-light); color: var(--charcoal); font-family: 'Inter', sans-serif; overflow-x: clip; }
 
-/* --rose-light (#D9A5AE) on --rose-dark only reaches ~3.0:1, below the 4.5:1
-   WCAG AA minimum for normal-size text. This lighter tone is scoped to the
-   small footer tagline instead of changing --rose-light globally, since that
+/* --rose-light (#FCC6D9) on --rose-dark (#B31B55) only reaches 4.44:1, below
+   the 4.5:1 WCAG AA minimum for normal-size text (this tone: 5.64:1). This lighter tone is scoped to
+   the small footer tagline instead of changing --rose-light globally, since that
    variable is also used at larger sizes and on other backgrounds elsewhere. */
-.footer-tagline { color: #F0D5DA; }
+.footer-tagline { color: #FFE8F1; }
 
 /* Same --rose-light-on-rose-dark contrast problem as .footer-tagline above,
    for the small CTA eyebrows/paragraphs reused across most pages. Scoped
    instead of changing --rose-light globally, since large decorative numbers
    and icons already pass at 3:1 (the large-text threshold) with the
    original shade and would look inconsistently dark if lightened further. */
-.rose-light-on-dark { color: #F0D5DA; }
+.rose-light-on-dark { color: #FFE8F1; }
 
 /* --rose-light used as small/medium-size decorative numbers on light
    (--beige-light/--beige-main) backgrounds in a few pages' "process" steps:
@@ -101,10 +111,10 @@ html, body { margin: 0; padding: 0; }
 }
 .btn-rose:hover,
 .btn-rose:focus-visible {
-  background-color: var(--rose-main);
+  background-color: var(--rose-darker);
 }
 .btn-rose:focus-visible {
-  box-shadow: 0 0 0 3px rgba(255,255,255,.45), 0 14px 30px -16px rgba(140,75,92,.45);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.45), 0 14px 30px -16px rgba(179,27,85,.45);
   transform: translateY(-1px);
 }
 
@@ -168,10 +178,10 @@ body[data-page="home"] .hero-cta > a + a {
 body[data-page="about"] #estudio-about .line-mask { overflow: hidden; display: block; padding-bottom: 0.12em; }
 body[data-page="about"] #estudio-about .team-card { will-change: transform, opacity; }
 body[data-page="blog"] .post-card { box-shadow: 0 2px 4px rgba(0,0,0,.05); transition: transform .3s ease, box-shadow .3s ease; }
-body[data-page="blog"] .post-card:hover { box-shadow: 0 16px 44px -18px rgba(140,75,92,.25); transform: translateY(-4px); }
+body[data-page="blog"] .post-card:hover { box-shadow: 0 16px 44px -18px rgba(246,74,138,.25); transform: translateY(-4px); }
 body[data-page="blog"] .trust-item:hover .trust-icon { color: var(--rose-dark); }
 body[data-page="contact"] .field { font-family: 'Inter', sans-serif; box-shadow: inset 0 1px 2px rgba(58,50,53,.05); }
-body[data-page="contact"] .field:focus-visible { border-color: var(--rose-main) !important; box-shadow: 0 0 0 3px var(--rose-main); }
+body[data-page="contact"] .field:focus-visible { border-color: var(--rose-dark) !important; box-shadow: 0 0 0 3px var(--rose-dark); }
 body[data-page="contact"] #contact-form option { font-family: 'Inter', sans-serif; }
 body[data-page="contact"] #contact-form label { margin-bottom: .5rem; }
 body[data-page="contact"] .reveal-content { will-change: transform, opacity; }
@@ -183,16 +193,16 @@ body[data-page="contact"] select.field {
   background-position: right 1rem center;
 }
 body[data-page="legal"] .legal-section { scroll-margin-top: 7rem; }
-body[data-page="legal"] .toc-link.is-active { color: var(--rose-dark); border-color: var(--rose-main); background: var(--white); }
+body[data-page="legal"] .toc-link.is-active { color: var(--rose-dark); border-color: var(--rose-brand); background: var(--white); }
 body[data-page="results"] .stat-item:hover .stat-icon { color: var(--rose-dark); }
-body[data-page="results"] .case-card:hover { box-shadow: 0 16px 44px -18px rgba(140,75,92,.25); transform: translateY(-4px); }
+body[data-page="results"] .case-card:hover { box-shadow: 0 16px 44px -18px rgba(246,74,138,.25); transform: translateY(-4px); }
 body[data-page="results"] .case-card { transition: transform .3s ease, box-shadow .3s ease; }
-body[data-page="results"] .quote-card:hover { border-color: var(--rose-main); }
+body[data-page="results"] .quote-card:hover { border-color: var(--rose-brand); }
 body[data-page="results"] .quote-card { transition: border-color .3s ease; }
 body[data-page="services"] .svc { box-shadow: 0 2px 4px rgba(0,0,0,.05); }
-body[data-page="services"] .svc:hover { box-shadow: 0 16px 44px rgba(140,75,92,.18); transform: translateY(-6px); }
+body[data-page="services"] .svc:hover { box-shadow: 0 16px 44px rgba(246,74,138,.18); transform: translateY(-6px); }
 body[data-page="services"] .btn-fill { transition: transform .3s ease, box-shadow .3s ease; }
-body[data-page="services"] .btn-fill:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(140,75,92,.25); }
+body[data-page="services"] .btn-fill:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(179,27,85,.25); }
 
 @media (max-width: 767px) {
   .mobile-brand-name { max-width: 11.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -226,3 +236,7 @@ body[data-page="services"] .btn-fill:hover { transform: translateY(-2px); box-sh
     transform: none !important;
   }
 }
+
+/* Brand pink (--rose-brand) on non-text accents only: text selection and the
+   hover glow/borders above. Text selection keeps dark ink on pink (5.12:1). */
+::selection { background: var(--rose-brand); color: #1F1A1C; }
